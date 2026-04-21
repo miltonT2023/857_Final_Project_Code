@@ -1,0 +1,23 @@
+[2.648s] Invoking command in '/home/nvidia/Milton_Final_Project/src/milton_final_project': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data
+[3.576s] running egg_info
+[3.638s] writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO
+[3.639s] writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt
+[3.639s] writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt
+[3.639s] writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt
+[3.639s] writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt
+[3.715s] reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.715s] adding license file 'LICENSE'
+[3.716s] writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.717s] running build
+[3.717s] running build_py
+[3.717s] running install
+[3.729s] running install_lib
+[3.765s] running install_data
+[3.765s] copying launch/yolo_launch.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/launch
+[3.765s] running install_egg_info
+[3.803s] removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)
+[3.803s] Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info
+[3.805s] running install_scripts
+[3.944s] Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[3.944s] writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'
+[4.056s] Invoked command in '/home/nvidia/Milton_Final_Project/src/milton_final_project' returned '0': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data

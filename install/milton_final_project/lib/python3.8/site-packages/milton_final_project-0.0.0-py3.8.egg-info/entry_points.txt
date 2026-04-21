@@ -1,0 +1,3 @@
+[console_scripts]
+yolo_node = milton_final_project.yolo_node:main
+yolo_web_stream = milton_final_project.yolo_web_stream:main

@@ -1,0 +1,6 @@
+source;share/milton_final_project/hook/pythonpath.ps1
+source;share/milton_final_project/hook/pythonpath.dsv
+source;share/milton_final_project/hook/pythonpath.sh
+source;share/milton_final_project/hook/ament_prefix_path.ps1
+source;share/milton_final_project/hook/ament_prefix_path.dsv
+source;share/milton_final_project/hook/ament_prefix_path.sh
