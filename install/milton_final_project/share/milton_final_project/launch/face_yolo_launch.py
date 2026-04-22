@@ -48,7 +48,7 @@ def generate_launch_description():
                 'waiting_message':
                 "Hi, I'm the navigation robot that helps you find a location or room."
             },
-            {'response_duration_sec': 8.0},
+            {'response_duration_sec': 10.0},
         ],
     )
 

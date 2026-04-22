@@ -37,7 +37,7 @@ class FaceDisplayNode(Node):
             'waiting_message',
             "Hi, I'm the navigation robot that helps you find a location or room.",
         )
-        self.declare_parameter('response_duration_sec', 8.0)
+        self.declare_parameter('response_duration_sec', 10.0)
         self.width = int(self.get_parameter('width').value)
         self.height = int(self.get_parameter('height').value)
         self.show_help = bool(self.get_parameter('show_help').value)
