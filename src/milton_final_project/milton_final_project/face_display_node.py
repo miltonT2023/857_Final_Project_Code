@@ -38,11 +38,19 @@ class FaceDisplayNode(Node):
             "Hi, I'm the navigation robot that helps you find a location or room.",
         )
         self.declare_parameter('response_duration_sec', 10.0)
+        self.declare_parameter('confirmation_timeout_sec', 15.0)
+        self.declare_parameter('navigation_timeout_sec', 20.0)
         self.width = int(self.get_parameter('width').value)
         self.height = int(self.get_parameter('height').value)
         self.show_help = bool(self.get_parameter('show_help').value)
         self.response_duration_sec = float(
             self.get_parameter('response_duration_sec').value
+        )
+        self.confirmation_timeout_sec = float(
+            self.get_parameter('confirmation_timeout_sec').value
+        )
+        self.navigation_timeout_sec = float(
+            self.get_parameter('navigation_timeout_sec').value
         )
         self.expression_index = 0
 
@@ -59,6 +67,9 @@ class FaceDisplayNode(Node):
         self.message_bg = (12, 18, 28, 235)
         self.message_outline = (66, 129, 164)
         self.message_text = (240, 244, 250)
+        self.navigation_bg = (28, 142, 77)
+        self.navigation_bg_dark = (16, 84, 46)
+        self.navigation_text = (244, 255, 247)
 
         self.cx = self.width // 2
         self.bottom_panel_height = 210
@@ -112,6 +123,10 @@ class FaceDisplayNode(Node):
         self.override_until = None
         self.input_buffer = ''
         self.pending_future = None
+        self.pending_destination_label = None
+        self.awaiting_confirmation = False
+        self.navigation_mode_active = False
+        self.state_timeout_at = None
         self.assistant_pool = ThreadPoolExecutor(max_workers=1)
         self.interpreter = RobotInterpreter()
         self.directory = SeicDirectory()
@@ -121,6 +136,7 @@ class FaceDisplayNode(Node):
         self.font = pygame.font.SysFont('arial', 28, bold=True)
         self.small_font = pygame.font.SysFont('arial', 18)
         self.message_font = pygame.font.SysFont('arial', 30, bold=True)
+        self.navigation_font = pygame.font.SysFont('arial', 58, bold=True)
         self.input_font = pygame.font.SysFont('arial', 26)
         self.help_lines = []
 
@@ -195,6 +211,10 @@ class FaceDisplayNode(Node):
         self.override_expression = None
         self.override_message = None
         self.override_until = None
+        self.pending_destination_label = None
+        self.awaiting_confirmation = False
+        self.navigation_mode_active = False
+        self.state_timeout_at = None
         self.active_expression = self.idle_expression
         self.current_message = self.waiting_message
         self.set_expression(self.idle_expression)
@@ -341,7 +361,14 @@ class FaceDisplayNode(Node):
         box_rect = box_surface.get_rect(midbottom=(self.cx, self.height - 8))
         self.screen.blit(box_surface, box_rect)
 
-        display_text = self.input_buffer if self.input_buffer else 'Room or location...'
+        if self.awaiting_confirmation:
+            placeholder = 'Type yes or no...'
+        elif self.navigation_mode_active:
+            placeholder = 'Press Enter to start over...'
+        else:
+            placeholder = 'Room or location...'
+
+        display_text = self.input_buffer if self.input_buffer else placeholder
         text_color = self.message_text if self.input_buffer else (140, 149, 168)
         max_text_width = box_width - 36
         display_text = self.fit_input_text(display_text, max_text_width)
@@ -358,6 +385,11 @@ class FaceDisplayNode(Node):
                 y += 22
 
     def draw(self):
+        if self.navigation_mode_active:
+            self.draw_navigation_mode()
+            pygame.display.flip()
+            return
+
         self.screen.fill(self.bg)
         self.draw_background()
         self.draw_expression()
@@ -366,6 +398,43 @@ class FaceDisplayNode(Node):
         self.draw_input_box()
         self.draw_status()
         pygame.display.flip()
+
+    def draw_navigation_mode(self):
+        self.screen.fill(self.navigation_bg)
+        banner = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        pygame.draw.rect(
+            banner,
+            (*self.navigation_bg_dark, 160),
+            pygame.Rect(50, 50, self.width - 100, self.height - 100),
+            border_radius=36,
+        )
+        self.screen.blit(banner, (0, 0))
+
+        headline = self.navigation_font.render("Let's go", True, self.navigation_text)
+        subline = self.message_font.render(
+            'Going to navigation mode.',
+            True,
+            self.navigation_text,
+        )
+        destination = self.pending_destination_label or 'your destination'
+        detail = self.message_font.render(
+            destination,
+            True,
+            self.navigation_text,
+        )
+
+        self.screen.blit(
+            headline,
+            headline.get_rect(center=(self.cx, self.height // 2 - 70)),
+        )
+        self.screen.blit(
+            subline,
+            subline.get_rect(center=(self.cx, self.height // 2 + 10)),
+        )
+        self.screen.blit(
+            detail,
+            detail.get_rect(center=(self.cx, self.height // 2 + 64)),
+        )
 
     def process_destination(self):
         destination = self.input_buffer.strip()
@@ -377,6 +446,14 @@ class FaceDisplayNode(Node):
 
         if not destination:
             self.clear_override()
+            return
+
+        if self.navigation_mode_active:
+            self.clear_override()
+            return
+
+        if self.awaiting_confirmation:
+            self.handle_confirmation_response(destination)
             return
 
         if self.pending_future is not None and not self.pending_future.done():
@@ -395,9 +472,65 @@ class FaceDisplayNode(Node):
     def lookup_destination(self, destination: str):
         target = self.interpreter.extract_target(destination)
         match = self.directory.find_best_match(target or destination)
-        message = self.directory.build_response(match)
+        base_message = self.directory.build_response(match)
         expression = self.directory.expression_for_match(match)
-        return {'message': message, 'expression': expression}
+        if match.entry is None:
+            return {
+                'message': base_message,
+                'expression': expression,
+                'await_confirmation': False,
+                'destination_label': None,
+            }
+
+        destination_label = match.entry.location if match.entry.kind == 'person' else match.entry.title
+        message = (
+            f'{base_message} Do you need help getting to {destination_label}? '
+            'Please type yes or no.'
+        )
+        return {
+            'message': message,
+            'expression': expression,
+            'await_confirmation': True,
+            'destination_label': destination_label,
+        }
+
+    def handle_confirmation_response(self, response: str):
+        normalized = response.strip().lower()
+        yes_tokens = {'yes', 'y', 'yeah', 'yep', 'sure', 'ok', 'okay'}
+        no_tokens = {'no', 'n', 'nope', 'nah'}
+
+        if normalized in yes_tokens:
+            self.navigation_mode_active = True
+            self.awaiting_confirmation = False
+            self.override_expression = None
+            self.override_message = None
+            self.override_until = None
+            self.active_expression = 'ready_to_go'
+            self.set_expression('ready_to_go')
+            self.current_message = 'Going to navigation mode.'
+            self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
+            return
+
+        if normalized in no_tokens:
+            self.set_override(
+                expression='happy',
+                message='Okay. If you need anything else, ask me about another room or person.',
+            )
+            self.awaiting_confirmation = False
+            self.pending_destination_label = None
+            self.state_timeout_at = self.now_seconds() + self.response_duration_sec
+            return
+
+        destination_label = self.pending_destination_label or 'that location'
+        self.set_override(
+            expression='confused',
+            message=f'Please answer yes or no. Do you need help getting to {destination_label}?',
+        )
+        self.awaiting_confirmation = True
+        self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
+
+    def now_seconds(self) -> float:
+        return self.get_clock().now().nanoseconds / 1e9
 
     def handle_key(self, key):
         if key == pygame.K_RETURN:
@@ -418,6 +551,10 @@ class FaceDisplayNode(Node):
             try:
                 reply = self.pending_future.result()
                 self.set_override(expression=reply['expression'], message=reply['message'])
+                self.pending_destination_label = reply['destination_label']
+                self.awaiting_confirmation = reply['await_confirmation']
+                if self.awaiting_confirmation:
+                    self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
             except Exception as exc:
                 self.get_logger().warning(f'Assistant reply failed: {exc}')
                 self.set_override(
@@ -429,8 +566,12 @@ class FaceDisplayNode(Node):
 
         if (
             self.override_until is not None
-            and self.get_clock().now().nanoseconds / 1e9 >= self.override_until
+            and self.now_seconds() >= self.override_until
         ):
+            if not self.awaiting_confirmation and not self.navigation_mode_active:
+                self.clear_override()
+
+        if self.state_timeout_at is not None and self.now_seconds() >= self.state_timeout_at:
             self.clear_override()
 
         for event in pygame.event.get():
@@ -438,6 +579,13 @@ class FaceDisplayNode(Node):
                 rclpy.shutdown()
                 return
             if event.type == pygame.KEYDOWN:
+                if self.awaiting_confirmation or self.navigation_mode_active:
+                    timeout_window = (
+                        self.navigation_timeout_sec
+                        if self.navigation_mode_active
+                        else self.confirmation_timeout_sec
+                    )
+                    self.state_timeout_at = self.now_seconds() + timeout_window
                 if event.key == pygame.K_ESCAPE:
                     rclpy.shutdown()
                     return

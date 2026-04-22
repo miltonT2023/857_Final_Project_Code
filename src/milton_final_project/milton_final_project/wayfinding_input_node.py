@@ -1,4 +1,5 @@
 from threading import Thread
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -15,6 +16,7 @@ class WayfindingInputNode(Node):
         self.expression_pub = self.create_publisher(String, '/face/expression', 10)
         self.message_pub = self.create_publisher(String, '/face/message', 10)
         self.running = True
+        self.response_duration_sec = 10.0
         self.interpreter = RobotInterpreter()
         self.directory = SeicDirectory()
 
@@ -54,6 +56,46 @@ class WayfindingInputNode(Node):
             match = self.directory.find_best_match(target or destination)
             self.publish_expression(self.directory.expression_for_match(match))
             self.publish_message(self.directory.build_response(match))
+
+            if match.entry is None:
+                continue
+
+            destination_label = (
+                match.entry.location if match.entry.kind == 'person' else match.entry.title
+            )
+            self.publish_message(
+                f'{self.directory.build_response(match)} Do you need help getting to {destination_label}?'
+            )
+
+            try:
+                answer = input('Do you need help getting there? (yes/no) ').strip().lower()
+            except EOFError:
+                break
+            except KeyboardInterrupt:
+                rclpy.shutdown()
+                break
+
+            if answer in {'yes', 'y', 'yeah', 'yep', 'sure', 'ok', 'okay'}:
+                self.publish_expression('ready_to_go')
+                self.publish_message(
+                    f"Let's go. Going to navigation mode for {destination_label}."
+                )
+                time.sleep(self.response_duration_sec)
+                self.publish_expression('confused')
+                self.publish_message(
+                    "Hi, I'm the navigation robot that helps you find a location or room."
+                )
+                continue
+
+            self.publish_expression('happy')
+            self.publish_message(
+                'Okay. If you need anything else, ask me about another room or person.'
+            )
+            time.sleep(2.0)
+            self.publish_expression('confused')
+            self.publish_message(
+                "Hi, I'm the navigation robot that helps you find a location or room."
+            )
 
     def destroy_node(self):
         self.running = False
