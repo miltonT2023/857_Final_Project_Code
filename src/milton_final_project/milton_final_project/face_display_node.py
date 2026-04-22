@@ -86,7 +86,7 @@ class FaceDisplayNode(Node):
             'confused',
         ]
         self.expressions = {
-            'neutral': AssetExpression('neutral', 'Neutral', 'bored', 124, 104, 48),
+            'neutral': AssetExpression('neutral', 'Neutral', 'happy', 58, 108, 6),
             'happy': AssetExpression('happy', 'Happy', 'happy', 58, 108, 6),
             'confused': AssetExpression('confused', 'Confused', 'thinking', 118, 118, 56),
         }
