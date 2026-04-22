@@ -245,12 +245,15 @@ class SeicDirectory:
 
         try:
             share_dir = Path(get_package_share_directory('milton_final_project'))
+            candidates.append(share_dir / 'data' / 'seic_public_directory_with_schedule.xlsx')
             candidates.append(share_dir / 'data' / 'seic_public_directory.xlsx')
         except Exception:
             pass
 
         here = Path(__file__).resolve()
+        candidates.append(here.parents[3] / 'data' / 'seic_public_directory_with_schedule.xlsx')
         candidates.append(here.parents[3] / 'data' / 'seic_public_directory.xlsx')
+        candidates.append(here.parents[2] / 'data' / 'seic_public_directory_with_schedule.xlsx')
         candidates.append(here.parents[2] / 'data' / 'seic_public_directory.xlsx')
 
         for candidate in candidates:
