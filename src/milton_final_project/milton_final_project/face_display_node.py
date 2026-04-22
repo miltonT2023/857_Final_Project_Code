@@ -277,7 +277,8 @@ class FaceDisplayNode(Node):
         expr = self.current_expression()
         active_expr = expr
         if active_expr.name == 'neutral':
-            active_expr = self.expressions['happy']
+            self.draw_neutral_face()
+            return
 
         eyes = self.loaded_eyes[active_expr.name]
         left_eye = self.scaled_surface(eyes['left'], active_expr.eye_height)
@@ -294,21 +295,27 @@ class FaceDisplayNode(Node):
 
         self.screen.blit(left_eye, left_rect)
         self.screen.blit(right_eye, right_rect)
-        if expr.name == 'neutral':
-            self.draw_neutral_smile()
 
-    def draw_neutral_smile(self):
+    def draw_neutral_face(self):
         face_offset_y = self.current_face_offset_y()
-        smile_rect = pygame.Rect(0, 0, 280, 120)
-        smile_rect.center = (self.cx, self.cy + 118 + face_offset_y)
-        pygame.draw.arc(
-            self.screen,
-            (34, 34, 34),
-            smile_rect,
-            math.radians(20),
-            math.radians(160),
-            8,
-        )
+        left_center = (self.cx - 150, self.cy - 68 + face_offset_y)
+        right_center = (self.cx + 150, self.cy - 68 + face_offset_y)
+
+        for eye_center in (left_center, right_center):
+            pygame.draw.circle(self.screen, (0, 0, 0), eye_center, 74)
+            highlight_center = (eye_center[0] + 24, eye_center[1] - 24)
+            pygame.draw.circle(self.screen, (248, 248, 248), highlight_center, 14)
+
+        smile_y = self.cy + 110 + face_offset_y
+        smile_points = []
+        for step in range(25):
+            t = step / 24.0
+            x = self.cx - 92 + t * 184
+            # Larger y at the center makes the curve read as a smile.
+            y = smile_y + 20 * (1 - ((t - 0.5) / 0.5) ** 2)
+            smile_points.append((int(x), int(y)))
+
+        pygame.draw.lines(self.screen, (34, 34, 34), False, smile_points, 8)
 
     def draw_message(self):
         lines = self.wrap_message(self.current_message)
