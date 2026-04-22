@@ -52,6 +52,17 @@ class WayfindingInputNode(Node):
                 self.publish_message("Hi, I'm the navigation robot that helps you find a location or room.")
                 continue
 
+            if self.interpreter.is_conversation_end(destination):
+                ending = self.interpreter.ending_response(destination)
+                self.publish_expression(ending['expression'])
+                self.publish_message(ending['message'])
+                time.sleep(2.0)
+                self.publish_expression('confused')
+                self.publish_message(
+                    "Hi, I'm the navigation robot that helps you find a location or room."
+                )
+                continue
+
             target = self.interpreter.extract_target(destination)
             match = self.directory.find_best_match(target or destination)
             self.publish_expression(self.directory.expression_for_match(match))

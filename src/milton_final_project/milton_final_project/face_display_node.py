@@ -456,6 +456,15 @@ class FaceDisplayNode(Node):
             self.handle_confirmation_response(destination)
             return
 
+        if self.interpreter.is_conversation_end(destination):
+            ending = self.interpreter.ending_response(destination)
+            self.set_override(
+                expression=ending['expression'],
+                message=ending['message'],
+            )
+            self.state_timeout_at = self.now_seconds() + self.response_duration_sec
+            return
+
         if self.pending_future is not None and not self.pending_future.done():
             self.set_override(
                 expression='confused',

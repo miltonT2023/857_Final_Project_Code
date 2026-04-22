@@ -68,6 +68,35 @@ class RobotInterpreter:
         ),
     )
 
+    _THANKS_PATTERN = re.compile(
+        r'\b(thank you|thanks|thank u|appreciate it|that helps)\b',
+        flags=re.IGNORECASE,
+    )
+    _GOODBYE_PATTERN = re.compile(
+        r'\b(bye|goodbye|see you|see ya|later|have a nice day|have a good day)\b',
+        flags=re.IGNORECASE,
+    )
+
+    def is_conversation_end(self, user_text: str) -> bool:
+        cleaned = ' '.join(user_text.strip().split())
+        if not cleaned:
+            return False
+        return bool(
+            self._THANKS_PATTERN.search(cleaned) or self._GOODBYE_PATTERN.search(cleaned)
+        )
+
+    def ending_response(self, user_text: str):
+        cleaned = ' '.join(user_text.strip().split())
+        if self._GOODBYE_PATTERN.search(cleaned):
+            return {
+                'expression': 'happy',
+                'message': 'Goodbye. Come back if you need help finding another location.',
+            }
+        return {
+            'expression': 'thank_you',
+            'message': "You're welcome. Let me know if you need help with another location.",
+        }
+
     def extract_target(self, user_text: str) -> str:
         cleaned = ' '.join(user_text.strip().split())
         if not cleaned:
