@@ -64,8 +64,10 @@ setup(
         'console_scripts': [
             'face_display_node = milton_final_project.face_display_node:main',
             'wayfinding_input_node = milton_final_project.wayfinding_input_node:main',
+            'wayfinding_history_node = milton_final_project.wayfinding_history_node:main',
             'yolo_node = milton_final_project.yolo_node:main',
             'yolo_web_stream = milton_final_project.yolo_web_stream:main',
+            'light_controller_node = milton_final_project.light_controller_node:main',
         ],
     },
 )

@@ -1,4 +1,5 @@
 # Pip-installable Python dependencies used by this project.
+numpy
 pygame
 opencv-python
 ultralytics

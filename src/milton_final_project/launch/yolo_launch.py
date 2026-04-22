@@ -15,7 +15,10 @@ def generate_launch_description():
                 'launch',
                 'rs_launch.py',
             )
-        )
+        ),
+        launch_arguments={
+            'align_depth.enable': 'true',
+        }.items(),
     )
 
     yolo_node = Node(
@@ -29,6 +32,7 @@ def generate_launch_description():
         parameters=[
             {'detection_model': 'yolov8n.pt'},
             {'image_topic': '/camera/color/image_raw'},
+            {'depth_topic': '/camera/aligned_depth_to_color/image_raw'},
             {'confidence': 0.25},
         ],
     )

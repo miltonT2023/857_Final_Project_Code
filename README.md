@@ -6,10 +6,11 @@ standalone `pygame` robot face demo.
 ## Main Features
 
 - A standalone animated robot face in `robot_face.py`
-- A ROS 2 face display node that shows expressions and messages
-- A terminal-based wayfinding input node
+- A ROS 2 face display node with a lighter UI, purple face glow, and camera preview
+- A terminal-based wayfinding input node plus a history logger for destination requests
+- A light controller node that maps robot states to LED colors
 - A SEIC directory lookup workflow backed by `data/seic_public_directory.xlsx`
-- A YOLO object-detection node using `yolov8n.pt`
+- A YOLO object-detection node using `yolov8n.pt` and aligned depth for distance estimates
 - A simple web stream for the annotated YOLO output
 
 ## Run The Standalone Face Demo
@@ -29,6 +30,8 @@ source install/setup.bash
 ros2 launch milton_final_project face_yolo_launch.py
 ```
 
+This launch file starts the face display, YOLO pipeline, and light controller.
+
 ## Run The Terminal Wayfinding Input Node
 
 ```bash
@@ -37,6 +40,32 @@ source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
 ros2 run milton_final_project wayfinding_input_node
+```
+
+## Run The Input History Logger Node
+
+This companion node records each typed destination and confirmation response to
+`/home/nvidia/Milton_Final_Project/runtime_logs/wayfinding_input_history.csv`.
+
+```bash
+cd /home/nvidia/Milton_Final_Project
+source /opt/ros/humble/setup.bash
+colcon build
+source install/setup.bash
+ros2 run milton_final_project wayfinding_history_node
+```
+
+## Run The LED Light Controller Node
+
+This node listens for robot state updates such as `waiting`, `confirmation`,
+and `navigation`, then publishes matching LED colors.
+
+```bash
+cd /home/nvidia/Milton_Final_Project
+source /opt/ros/humble/setup.bash
+colcon build
+source install/setup.bash
+ros2 run milton_final_project light_controller_node
 ```
 
 ## Python Requirements
@@ -77,7 +106,9 @@ through `pip`.
 
 - `src/milton_final_project/milton_final_project/__init__.py`: package initializer
 - `src/milton_final_project/milton_final_project/face_display_node.py`: ROS 2 node that renders the robot face, expressions, and text messages on screen
-- `src/milton_final_project/milton_final_project/wayfinding_input_node.py`: ROS 2 node that reads terminal input and publishes face messages and expressions
+- `src/milton_final_project/milton_final_project/wayfinding_input_node.py`: ROS 2 node that reads terminal input, publishes face updates, and emits user input events
+- `src/milton_final_project/milton_final_project/wayfinding_history_node.py`: ROS 2 node that records destination and confirmation input history to a CSV log
+- `src/milton_final_project/milton_final_project/light_controller_node.py`: ROS 2 node that converts robot state messages into LED color output
 - `src/milton_final_project/milton_final_project/seic_directory.py`: loads the SEIC spreadsheet and finds the best room or person match
 - `src/milton_final_project/milton_final_project/robot_interpreter.py`: extracts a destination target from free-form user input
 - `src/milton_final_project/milton_final_project/robot_assistant.py`: helper for short robot-style responses using an Ollama model when available
@@ -87,7 +118,7 @@ through `pip`.
 ### Launch Files
 
 - `src/milton_final_project/launch/yolo_launch.py`: launches the YOLO pipeline
-- `src/milton_final_project/launch/face_yolo_launch.py`: launches the face display together with the YOLO pipeline
+- `src/milton_final_project/launch/face_yolo_launch.py`: launches the face display, light controller, and YOLO pipeline together
 
 ### Generated Build Output
 

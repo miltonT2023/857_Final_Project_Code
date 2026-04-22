@@ -8,6 +8,16 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    qbot_platform_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('qbot_platform'),
+                'launch',
+                'qbot_platform_launch.py',
+            )
+        )
+    )
+
     realsense_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -15,7 +25,10 @@ def generate_launch_description():
                 'launch',
                 'rs_launch.py',
             )
-        )
+        ),
+        launch_arguments={
+            'align_depth.enable': 'true',
+        }.items(),
     )
 
     yolo_node = Node(
@@ -29,6 +42,7 @@ def generate_launch_description():
         parameters=[
             {'detection_model': 'yolov8n.pt'},
             {'image_topic': '/camera/color/image_raw'},
+            {'depth_topic': '/camera/aligned_depth_to_color/image_raw'},
             {'confidence': 0.25},
         ],
     )
@@ -52,8 +66,17 @@ def generate_launch_description():
         ],
     )
 
+    light_controller_node = Node(
+        package='milton_final_project',
+        executable='light_controller_node',
+        name='light_controller_node',
+        output='screen',
+    )
+
     return LaunchDescription([
+        qbot_platform_launch,
         realsense_launch,
         yolo_node,
         face_display_node,
+        light_controller_node,
     ])

@@ -5,9 +5,12 @@ from concurrent.futures import ThreadPoolExecutor
 import textwrap
 
 from ament_index_python.packages import get_package_share_directory
+from cv_bridge import CvBridge
+import numpy as np
 import pygame
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
 from .robot_interpreter import RobotInterpreter
@@ -32,6 +35,7 @@ class FaceDisplayNode(Node):
         self.declare_parameter('height', 600)
         self.declare_parameter('fullscreen', True)
         self.declare_parameter('show_help', False)
+        self.declare_parameter('preview_topic', '/yolo/annotated_image')
         self.declare_parameter('initial_expression', 'neutral')
         self.declare_parameter(
             'waiting_message',
@@ -52,6 +56,7 @@ class FaceDisplayNode(Node):
         self.navigation_timeout_sec = float(
             self.get_parameter('navigation_timeout_sec').value
         )
+        self.preview_topic = self.get_parameter('preview_topic').value
         self.expression_index = 0
 
         pygame.init()
@@ -61,14 +66,14 @@ class FaceDisplayNode(Node):
         self.screen = pygame.display.set_mode((self.width, self.height), display_flags)
         self.clock = pygame.time.Clock()
 
-        self.bg = (8, 10, 14)
-        self.label = (225, 232, 244)
-        self.help_color = (168, 178, 198)
-        self.message_bg = (12, 18, 28, 235)
-        self.message_outline = (66, 129, 164)
-        self.message_text = (240, 244, 250)
-        self.navigation_bg = (28, 142, 77)
-        self.navigation_bg_dark = (16, 84, 46)
+        self.bg = (236, 244, 248)
+        self.label = (79, 105, 120)
+        self.help_color = (106, 130, 144)
+        self.message_bg = (250, 253, 255, 238)
+        self.message_outline = (132, 198, 214)
+        self.message_text = (48, 68, 82)
+        self.navigation_bg = (104, 193, 143)
+        self.navigation_bg_dark = (66, 144, 104)
         self.navigation_text = (244, 255, 247)
 
         self.cx = self.width // 2
@@ -88,7 +93,7 @@ class FaceDisplayNode(Node):
         self.expressions = {
             'neutral': AssetExpression('neutral', 'Neutral', 'happy', 58, 108, 6),
             'happy': AssetExpression('happy', 'Happy', 'happy', 58, 108, 6),
-            'confused': AssetExpression('confused', 'Confused', 'thinking', 118, 118, 56),
+            'confused': AssetExpression('confused', 'Confused', 'happy', 58, 108, 6),
         }
         self.loaded_eyes = {
             name: {
@@ -116,6 +121,11 @@ class FaceDisplayNode(Node):
         self.assistant_pool = ThreadPoolExecutor(max_workers=1)
         self.interpreter = RobotInterpreter()
         self.directory = SeicDirectory()
+        self.bridge = CvBridge()
+        self.preview_surface = None
+        self.preview_size = (320, 180)
+        self.face_glow_color = (196, 168, 255, 92)
+        self.face_halo_color = (156, 126, 235, 78)
 
         self.set_expression(self.active_expression)
 
@@ -138,9 +148,19 @@ class FaceDisplayNode(Node):
             self.message_callback,
             10,
         )
+        self.preview_sub = self.create_subscription(
+            Image,
+            self.preview_topic,
+            self.preview_callback,
+            10,
+        )
+        self.light_state_pub = self.create_publisher(String, '/robot/light_state', 10)
+        self.last_light_state = None
 
         self.timer = self.create_timer(1.0 / 30.0, self.update_frame)
+        self.publish_light_state()
         self.get_logger().info(f'Face monitor ready with assets from: {self.assets_dir}')
+        self.get_logger().info(f'Face preview subscribed to: {self.preview_topic}')
 
     def load_image(self, relative_path: str) -> pygame.Surface:
         path = self.assets_dir / relative_path
@@ -213,6 +233,24 @@ class FaceDisplayNode(Node):
         self.active_expression = self.idle_expression
         self.current_message = self.waiting_message
         self.set_expression(self.idle_expression)
+        self.publish_light_state()
+
+    def current_light_state(self) -> str:
+        if self.navigation_mode_active:
+            return 'navigation'
+        if self.awaiting_confirmation:
+            return 'confirmation'
+        return 'waiting'
+
+    def publish_light_state(self):
+        state = self.current_light_state()
+        if state == self.last_light_state:
+            return
+
+        msg = String()
+        msg.data = state
+        self.light_state_pub.publish(msg)
+        self.last_light_state = state
 
     def expression_callback(self, msg: String):
         expression = msg.data.strip()
@@ -223,6 +261,17 @@ class FaceDisplayNode(Node):
         message = msg.data.strip()
         if message:
             self.set_override(message=message)
+
+    def preview_callback(self, msg: Image):
+        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        rgb_frame = frame[:, :, ::-1]
+        rgb_frame = np.ascontiguousarray(rgb_frame)
+        surface = pygame.image.frombuffer(
+            rgb_frame.tobytes(),
+            (rgb_frame.shape[1], rgb_frame.shape[0]),
+            'RGB',
+        )
+        self.preview_surface = surface.copy()
 
     def current_gaze_offset(self):
         if self.override_expression == 'happy':
@@ -246,8 +295,18 @@ class FaceDisplayNode(Node):
 
     def draw_background(self):
         face_offset_y = self.current_face_offset_y()
+        halo = pygame.Surface((self.face_size + 160, self.face_size + 160), pygame.SRCALPHA)
+        pygame.draw.ellipse(halo, self.face_halo_color, halo.get_rect())
+        halo_rect = halo.get_rect(center=(self.cx, self.cy - 10 + face_offset_y))
+        self.screen.blit(halo, halo_rect)
+
+        glow = pygame.Surface((self.face_size + 70, self.face_size + 70), pygame.SRCALPHA)
+        pygame.draw.ellipse(glow, self.face_glow_color, glow.get_rect())
+        glow_rect = glow.get_rect(center=(self.cx, self.cy - 6 + face_offset_y))
+        self.screen.blit(glow, glow_rect)
+
         shadow = pygame.Surface((self.face_size + 44, self.face_size + 44), pygame.SRCALPHA)
-        pygame.draw.ellipse(shadow, (0, 0, 0, 72), shadow.get_rect())
+        pygame.draw.ellipse(shadow, (56, 91, 104, 42), shadow.get_rect())
         shadow_rect = shadow.get_rect(center=(self.cx, self.cy + 12 + face_offset_y))
         self.screen.blit(shadow, shadow_rect)
 
@@ -259,13 +318,13 @@ class FaceDisplayNode(Node):
         panel_surface = pygame.Surface((self.width, self.bottom_panel_height), pygame.SRCALPHA)
         pygame.draw.rect(
             panel_surface,
-            (6, 10, 18, 232),
+            (222, 238, 244, 228),
             panel_surface.get_rect(),
             border_radius=28,
         )
         pygame.draw.line(
             panel_surface,
-            (35, 58, 84, 255),
+            (159, 207, 217, 255),
             (42, 0),
             (self.width - 42, 0),
             2,
@@ -275,47 +334,21 @@ class FaceDisplayNode(Node):
 
     def draw_expression(self):
         expr = self.current_expression()
-        active_expr = expr
-        if active_expr.name == 'neutral':
-            self.draw_neutral_face()
-            return
+        eyes = self.loaded_eyes[expr.name]
+        left_eye = self.scaled_surface(eyes['left'], expr.eye_height)
+        right_eye = self.scaled_surface(eyes['right'], expr.eye_height)
 
-        eyes = self.loaded_eyes[active_expr.name]
-        left_eye = self.scaled_surface(eyes['left'], active_expr.eye_height)
-        right_eye = self.scaled_surface(eyes['right'], active_expr.eye_height)
-
-        baseline = self.cy + active_expr.baseline_offset + self.current_face_offset_y()
+        baseline = self.cy + expr.baseline_offset + self.current_face_offset_y()
         gaze_offset = self.current_gaze_offset()
         left_rect = left_eye.get_rect(
-            midbottom=(self.cx - active_expr.eye_gap + gaze_offset, baseline)
+            midbottom=(self.cx - expr.eye_gap + gaze_offset, baseline)
         )
         right_rect = right_eye.get_rect(
-            midbottom=(self.cx + active_expr.eye_gap + gaze_offset, baseline)
+            midbottom=(self.cx + expr.eye_gap + gaze_offset, baseline)
         )
 
         self.screen.blit(left_eye, left_rect)
         self.screen.blit(right_eye, right_rect)
-
-    def draw_neutral_face(self):
-        face_offset_y = self.current_face_offset_y()
-        left_center = (self.cx - 150, self.cy - 68 + face_offset_y)
-        right_center = (self.cx + 150, self.cy - 68 + face_offset_y)
-
-        for eye_center in (left_center, right_center):
-            pygame.draw.circle(self.screen, (0, 0, 0), eye_center, 74)
-            highlight_center = (eye_center[0] + 24, eye_center[1] - 24)
-            pygame.draw.circle(self.screen, (248, 248, 248), highlight_center, 14)
-
-        smile_y = self.cy + 110 + face_offset_y
-        smile_points = []
-        for step in range(25):
-            t = step / 24.0
-            x = self.cx - 92 + t * 184
-            # Larger y at the center makes the curve read as a smile.
-            y = smile_y + 20 * (1 - ((t - 0.5) / 0.5) ** 2)
-            smile_points.append((int(x), int(y)))
-
-        pygame.draw.lines(self.screen, (34, 34, 34), False, smile_points, 8)
 
     def draw_message(self):
         lines = self.wrap_message(self.current_message)
@@ -361,13 +394,13 @@ class FaceDisplayNode(Node):
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
         pygame.draw.rect(
             box_surface,
-            (10, 14, 22, 240),
+            (248, 251, 253, 240),
             box_surface.get_rect(),
             border_radius=18,
         )
         pygame.draw.rect(
             box_surface,
-            (92, 173, 226),
+            (132, 198, 214),
             box_surface.get_rect(),
             width=2,
             border_radius=18,
@@ -384,7 +417,7 @@ class FaceDisplayNode(Node):
             placeholder = 'Room or location...'
 
         display_text = self.input_buffer if self.input_buffer else placeholder
-        text_color = self.message_text if self.input_buffer else (140, 149, 168)
+        text_color = self.message_text if self.input_buffer else (136, 154, 165)
         max_text_width = box_width - 36
         display_text = self.fit_input_text(display_text, max_text_width)
         text_surface = self.input_font.render(display_text, True, text_color)
@@ -399,6 +432,40 @@ class FaceDisplayNode(Node):
                 self.screen.blit(text, (26, y))
                 y += 22
 
+    def draw_preview(self):
+        if self.preview_surface is None:
+            return
+
+        preview_width, preview_height = self.preview_size
+        frame_surface = pygame.Surface((preview_width + 16, preview_height + 16), pygame.SRCALPHA)
+        pygame.draw.rect(
+            frame_surface,
+            (246, 250, 252, 228),
+            frame_surface.get_rect(),
+            border_radius=18,
+        )
+        pygame.draw.rect(
+            frame_surface,
+            (132, 198, 214, 255),
+            frame_surface.get_rect(),
+            width=2,
+            border_radius=18,
+        )
+
+        frame_rect = frame_surface.get_rect(topright=(self.width - 22, 22))
+        self.screen.blit(frame_surface, frame_rect)
+
+        scaled_preview = pygame.transform.smoothscale(
+            self.preview_surface,
+            (preview_width, preview_height),
+        )
+        preview_rect = scaled_preview.get_rect(center=frame_rect.center)
+        self.screen.blit(scaled_preview, preview_rect)
+
+        label_surface = self.small_font.render('Camera Preview', True, self.label)
+        label_rect = label_surface.get_rect(topright=(frame_rect.right - 10, frame_rect.bottom + 6))
+        self.screen.blit(label_surface, label_rect)
+
     def draw(self):
         if self.navigation_mode_active:
             self.draw_navigation_mode()
@@ -408,6 +475,7 @@ class FaceDisplayNode(Node):
         self.screen.fill(self.bg)
         self.draw_background()
         self.draw_expression()
+        self.draw_preview()
         self.draw_bottom_panel()
         self.draw_message()
         self.draw_input_box()
@@ -527,6 +595,7 @@ class FaceDisplayNode(Node):
             self.set_expression('happy')
             self.current_message = 'Going to navigation mode.'
             self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
+            self.publish_light_state()
             return
 
         if normalized in no_tokens:
@@ -537,6 +606,7 @@ class FaceDisplayNode(Node):
             self.awaiting_confirmation = False
             self.pending_destination_label = None
             self.state_timeout_at = self.now_seconds() + self.response_duration_sec
+            self.publish_light_state()
             return
 
         destination_label = self.pending_destination_label or 'that location'
@@ -546,6 +616,7 @@ class FaceDisplayNode(Node):
         )
         self.awaiting_confirmation = True
         self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
+        self.publish_light_state()
 
     def now_seconds(self) -> float:
         return self.get_clock().now().nanoseconds / 1e9
@@ -569,12 +640,14 @@ class FaceDisplayNode(Node):
                 self.awaiting_confirmation = reply['await_confirmation']
                 if self.awaiting_confirmation:
                     self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
+                self.publish_light_state()
             except Exception as exc:
-                self.get_logger().warning(f'Assistant reply failed: {exc}')
+                self.get_logger().warning(f'Destination lookup failed: {exc!r}')
                 self.set_override(
                     expression='confused',
                     message='Sorry, I had trouble thinking of a reply just now.',
                 )
+                self.publish_light_state()
             finally:
                 self.pending_future = None
 
