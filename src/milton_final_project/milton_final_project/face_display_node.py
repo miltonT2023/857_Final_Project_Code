@@ -277,8 +277,7 @@ class FaceDisplayNode(Node):
         expr = self.current_expression()
         active_expr = expr
         if active_expr.name == 'neutral':
-            self.draw_neutral_face()
-            return
+            active_expr = self.expressions['happy']
 
         eyes = self.loaded_eyes[active_expr.name]
         left_eye = self.scaled_surface(eyes['left'], active_expr.eye_height)
@@ -295,19 +294,13 @@ class FaceDisplayNode(Node):
 
         self.screen.blit(left_eye, left_rect)
         self.screen.blit(right_eye, right_rect)
+        if expr.name == 'neutral':
+            self.draw_neutral_smile()
 
-    def draw_neutral_face(self):
+    def draw_neutral_smile(self):
         face_offset_y = self.current_face_offset_y()
-        left_center = (self.cx - 150, self.cy - 70 + face_offset_y)
-        right_center = (self.cx + 150, self.cy - 70 + face_offset_y)
-
-        for eye_center in (left_center, right_center):
-            pygame.draw.circle(self.screen, (0, 0, 0), eye_center, 78)
-            highlight_center = (eye_center[0] + 28, eye_center[1] - 28)
-            pygame.draw.circle(self.screen, (248, 248, 248), highlight_center, 16)
-
         smile_rect = pygame.Rect(0, 0, 280, 120)
-        smile_rect.center = (self.cx, self.cy + 110 + face_offset_y)
+        smile_rect.center = (self.cx, self.cy + 118 + face_offset_y)
         pygame.draw.arc(
             self.screen,
             (34, 34, 34),
