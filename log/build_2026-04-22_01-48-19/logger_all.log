@@ -1,0 +1,326 @@
+[0.550s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build']
+[0.551s] DEBUG:colcon:Parsed command line arguments: Namespace(allow_overriding=[], ament_cmake_args=None, base_paths=['.'], build_base='build', catkin_cmake_args=None, catkin_skip_building_tests=False, cmake_args=None, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, cmake_target=None, cmake_target_skip_unavailable=False, continue_on_error=False, event_handlers=None, executor='parallel', ignore_user_meta=False, install_base='install', log_base=None, log_level=None, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0xffffa437c910>>, merge_install=False, metas=['./colcon.meta'], mixin=None, mixin_files=None, mixin_verb=('build',), packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_end=None, packages_ignore=None, packages_ignore_regex=None, packages_select=None, packages_select_build_failed=False, packages_select_by_dep=None, packages_select_regex=None, packages_select_test_failures=False, packages_skip=None, packages_skip_build_finished=False, packages_skip_by_dep=None, packages_skip_regex=None, packages_skip_test_passed=False, packages_skip_up_to=None, packages_start=None, packages_up_to=None, packages_up_to_regex=None, parallel_workers=6, paths=None, symlink_install=False, test_result_base=None, verb_extension=<colcon_core.verb.build.BuildVerb object at 0xffffa437c910>, verb_name='build', verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0xffffa3888e50>)
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[1.138s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[1.139s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/nvidia/Milton_Final_Project'
+[1.139s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[1.139s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[1.139s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[1.139s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[1.140s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[1.140s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[1.140s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[1.140s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[1.140s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[1.170s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[1.170s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[1.170s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[1.170s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[1.171s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[1.171s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['ignore', 'ignore_ament_install']
+[1.171s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'ignore'
+[1.171s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'ignore_ament_install'
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['colcon_pkg']
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'colcon_pkg'
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['colcon_meta']
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'colcon_meta'
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['ros']
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'ros'
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['cmake', 'python']
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'cmake'
+[1.172s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'python'
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extensions ['python_setup_py']
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets) by extension 'python_setup_py'
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['ignore', 'ignore_ament_install']
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'ignore'
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'ignore_ament_install'
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['colcon_pkg']
+[1.173s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'colcon_pkg'
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['colcon_meta']
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'colcon_meta'
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['ros']
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'ros'
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['cmake', 'python']
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'cmake'
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'python'
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extensions ['python_setup_py']
+[1.174s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face) by extension 'python_setup_py'
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['ignore', 'ignore_ament_install']
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'ignore'
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'ignore_ament_install'
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['colcon_pkg']
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'colcon_pkg'
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['colcon_meta']
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'colcon_meta'
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['ros']
+[1.175s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'ros'
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['cmake', 'python']
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'cmake'
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'python'
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extensions ['python_setup_py']
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/annoyed) by extension 'python_setup_py'
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['ignore', 'ignore_ament_install']
+[1.176s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'ignore'
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'ignore_ament_install'
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['colcon_pkg']
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'colcon_pkg'
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['colcon_meta']
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'colcon_meta'
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['ros']
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'ros'
+[1.177s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['cmake', 'python']
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'cmake'
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'python'
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extensions ['python_setup_py']
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/anxious) by extension 'python_setup_py'
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['ignore', 'ignore_ament_install']
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'ignore'
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'ignore_ament_install'
+[1.178s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['colcon_pkg']
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'colcon_pkg'
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['colcon_meta']
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'colcon_meta'
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['ros']
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'ros'
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['cmake', 'python']
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'cmake'
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'python'
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extensions ['python_setup_py']
+[1.179s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/apologetic) by extension 'python_setup_py'
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['ignore', 'ignore_ament_install']
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'ignore'
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'ignore_ament_install'
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['colcon_pkg']
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'colcon_pkg'
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['colcon_meta']
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'colcon_meta'
+[1.180s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['ros']
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'ros'
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['cmake', 'python']
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'cmake'
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'python'
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extensions ['python_setup_py']
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/awkward) by extension 'python_setup_py'
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['ignore', 'ignore_ament_install']
+[1.181s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'ignore'
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'ignore_ament_install'
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['colcon_pkg']
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'colcon_pkg'
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['colcon_meta']
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'colcon_meta'
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['ros']
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'ros'
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['cmake', 'python']
+[1.182s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'cmake'
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'python'
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extensions ['python_setup_py']
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/blinking) by extension 'python_setup_py'
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['ignore', 'ignore_ament_install']
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'ignore'
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'ignore_ament_install'
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['colcon_pkg']
+[1.183s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'colcon_pkg'
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['colcon_meta']
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'colcon_meta'
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['ros']
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'ros'
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['cmake', 'python']
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'cmake'
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'python'
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extensions ['python_setup_py']
+[1.184s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/bored) by extension 'python_setup_py'
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['ignore', 'ignore_ament_install']
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'ignore'
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'ignore_ament_install'
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['colcon_pkg']
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'colcon_pkg'
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['colcon_meta']
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'colcon_meta'
+[1.185s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['ros']
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'ros'
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['cmake', 'python']
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'cmake'
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'python'
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extensions ['python_setup_py']
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/determined) by extension 'python_setup_py'
+[1.186s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['ignore', 'ignore_ament_install']
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'ignore'
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'ignore_ament_install'
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['colcon_pkg']
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'colcon_pkg'
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['colcon_meta']
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'colcon_meta'
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['ros']
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'ros'
+[1.187s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['cmake', 'python']
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'cmake'
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'python'
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extensions ['python_setup_py']
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/excited) by extension 'python_setup_py'
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['ignore', 'ignore_ament_install']
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'ignore'
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'ignore_ament_install'
+[1.188s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['colcon_pkg']
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'colcon_pkg'
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['colcon_meta']
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'colcon_meta'
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['ros']
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'ros'
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['cmake', 'python']
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'cmake'
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'python'
+[1.189s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extensions ['python_setup_py']
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/giggle) by extension 'python_setup_py'
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['ignore', 'ignore_ament_install']
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'ignore'
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'ignore_ament_install'
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['colcon_pkg']
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'colcon_pkg'
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['colcon_meta']
+[1.190s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'colcon_meta'
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['ros']
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'ros'
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['cmake', 'python']
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'cmake'
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'python'
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extensions ['python_setup_py']
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/happy) by extension 'python_setup_py'
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['ignore', 'ignore_ament_install']
+[1.191s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'ignore'
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'ignore_ament_install'
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['colcon_pkg']
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'colcon_pkg'
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['colcon_meta']
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'colcon_meta'
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['ros']
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'ros'
+[1.192s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['cmake', 'python']
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'cmake'
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'python'
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extensions ['python_setup_py']
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(assets/kaia_face/thinking) by extension 'python_setup_py'
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[1.193s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['ignore', 'ignore_ament_install']
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'ignore'
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'ignore_ament_install'
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['colcon_pkg']
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'colcon_pkg'
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['colcon_meta']
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'colcon_meta'
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['ros']
+[1.194s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'ros'
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['cmake', 'python']
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'cmake'
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'python'
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extensions ['python_setup_py']
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(data) by extension 'python_setup_py'
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[1.195s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[1.196s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[1.196s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[1.196s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[1.196s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[1.196s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[1.197s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extensions ['ignore', 'ignore_ament_install']
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extension 'ignore'
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extension 'ignore_ament_install'
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extensions ['colcon_pkg']
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extension 'colcon_pkg'
+[1.198s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extensions ['colcon_meta']
+[1.199s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extension 'colcon_meta'
+[1.199s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extensions ['ros']
+[1.199s] Level 1:colcon.colcon_core.package_identification:_identify(src/milton_final_project) by extension 'ros'
+[1.204s] DEBUG:colcon.colcon_core.package_identification:Package 'src/milton_final_project' with type 'ros.ament_python' and name 'milton_final_project'
+[1.205s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[1.205s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[1.205s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[1.205s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[1.205s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[1.246s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[1.246s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[1.251s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 3 installed packages in /home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install
+[1.252s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 3 installed packages in /home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install
+[1.253s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/teleop/install
+[1.254s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 3 installed packages in /home/nvidia/ros2/install
+[1.258s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 355 installed packages in /opt/ros/humble
+[1.262s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[1.400s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_args' from command line to 'None'
+[1.400s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_target' from command line to 'None'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_clean_cache' from command line to 'False'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_clean_first' from command line to 'False'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'cmake_force_configure' from command line to 'False'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'ament_cmake_args' from command line to 'None'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'catkin_cmake_args' from command line to 'None'
+[1.401s] Level 5:colcon.colcon_core.verb:set package 'milton_final_project' build argument 'catkin_skip_building_tests' from command line to 'False'
+[1.401s] DEBUG:colcon.colcon_core.verb:Building package 'milton_final_project' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/nvidia/Milton_Final_Project/build/milton_final_project', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/nvidia/Milton_Final_Project/install/milton_final_project', 'merge_install': False, 'path': '/home/nvidia/Milton_Final_Project/src/milton_final_project', 'symlink_install': False, 'test_result_base': None}
+[1.401s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[1.404s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[1.404s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/nvidia/Milton_Final_Project/src/milton_final_project' with build type 'ament_python'
+[1.405s] Level 1:colcon.colcon_core.shell:create_environment_hook('milton_final_project', 'ament_prefix_path')
+[1.409s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[1.409s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/ament_prefix_path.ps1'
+[1.411s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/ament_prefix_path.dsv'
+[1.412s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/ament_prefix_path.sh'
+[1.413s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.413s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.367s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/nvidia/Milton_Final_Project/src/milton_final_project'
+[2.368s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.368s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[4.046s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/nvidia/Milton_Final_Project/src/milton_final_project': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data
+[5.550s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/nvidia/Milton_Final_Project/src/milton_final_project' returned '0': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data
+[5.559s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project' for CMake module files
+[5.561s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project' for CMake config files
+[5.566s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib'
+[5.566s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project/bin'
+[5.567s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/pkgconfig/milton_final_project.pc'
+[5.568s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages'
+[5.568s] Level 1:colcon.colcon_core.shell:create_environment_hook('milton_final_project', 'pythonpath')
+[5.569s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/pythonpath.ps1'
+[5.571s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/pythonpath.dsv'
+[5.572s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/hook/pythonpath.sh'
+[5.574s] Level 1:colcon.colcon_core.environment:checking '/home/nvidia/Milton_Final_Project/install/milton_final_project/bin'
+[5.574s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(milton_final_project)
+[5.576s] INFO:colcon.colcon_core.shell:Creating package script '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/package.ps1'
+[5.578s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/package.dsv'
+[5.580s] INFO:colcon.colcon_core.shell:Creating package script '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/package.sh'
+[5.582s] INFO:colcon.colcon_core.shell:Creating package script '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/package.bash'
+[5.585s] INFO:colcon.colcon_core.shell:Creating package script '/home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/package.zsh'
+[5.586s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/nvidia/Milton_Final_Project/install/milton_final_project/share/colcon-core/packages/milton_final_project)
+[5.588s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[5.588s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[5.589s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[5.589s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[5.606s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[5.606s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[5.607s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[5.659s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[5.660s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/nvidia/Milton_Final_Project/install/local_setup.ps1'
+[5.663s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/nvidia/Milton_Final_Project/install/_local_setup_util_ps1.py'
+[5.666s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/nvidia/Milton_Final_Project/install/setup.ps1'
+[5.670s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/nvidia/Milton_Final_Project/install/local_setup.sh'
+[5.671s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/nvidia/Milton_Final_Project/install/_local_setup_util_sh.py'
+[5.672s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/nvidia/Milton_Final_Project/install/setup.sh'
+[5.676s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/nvidia/Milton_Final_Project/install/local_setup.bash'
+[5.677s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/nvidia/Milton_Final_Project/install/setup.bash'
+[5.680s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/nvidia/Milton_Final_Project/install/local_setup.zsh'
+[5.682s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/nvidia/Milton_Final_Project/install/setup.zsh'

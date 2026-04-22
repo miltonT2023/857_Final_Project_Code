@@ -1,0 +1,23 @@
+running egg_info
+writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO
+writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt
+writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt
+writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt
+writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt
+reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)
+Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info
+running install_scripts
+Installing face_display_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+Installing wayfinding_input_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+Installing yolo_web_stream script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'

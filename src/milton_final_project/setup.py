@@ -53,7 +53,7 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=data_files,
-    install_requires=['setuptools', 'rapidfuzz>=3.0.0'],
+    install_requires=['setuptools'],
     zip_safe=True,
     maintainer='nvidia',
     maintainer_email='adelacruz@sfsu.edu',

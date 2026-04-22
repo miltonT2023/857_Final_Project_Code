@@ -1,2 +1,1 @@
 setuptools
-rapidfuzz>=3.0.0
