@@ -2,11 +2,17 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional, Set, Tuple
 import zipfile
 from xml.etree import ElementTree as ET
 
 from ament_index_python.packages import get_package_share_directory
+
+try:
+    from rapidfuzz import fuzz, process
+except ImportError:  # pragma: no cover - runtime fallback when dependency is absent
+    fuzz = None
+    process = None
 
 
 @dataclass(frozen=True)
@@ -24,6 +30,8 @@ class DirectoryMatch:
     query: str
     entry: Optional[DirectoryEntry]
     score: float
+    reason: str
+    alternatives: Tuple[str, ...] = ()
 
 
 class SeicDirectory:
@@ -33,28 +41,64 @@ class SeicDirectory:
 
         self.workbook_path = workbook_path
         self.entries = self._load_entries()
+        self.entry_aliases = self._build_entry_aliases()
 
     def find_best_match(self, user_query: str) -> DirectoryMatch:
         cleaned_query = self._normalize_query(user_query)
         if not cleaned_query:
-            return DirectoryMatch(query='', entry=None, score=0.0)
+            return DirectoryMatch(query='', entry=None, score=0.0, reason='empty_query')
 
-        best_entry = None
-        best_score = 0.0
+        exact_entry = self._match_by_room_number(cleaned_query)
+        if exact_entry is not None:
+            return DirectoryMatch(
+                query=cleaned_query,
+                entry=exact_entry,
+                score=1.0,
+                reason='room_number',
+            )
 
-        for entry in self.entries:
-            score = self._score_entry(cleaned_query, entry)
-            if score > best_score:
-                best_score = score
-                best_entry = entry
+        alias_entry = self._match_by_alias(cleaned_query)
+        if alias_entry is not None:
+            return DirectoryMatch(
+                query=cleaned_query,
+                entry=alias_entry,
+                score=0.99,
+                reason='alias',
+            )
 
-        if best_score < 0.52:
-            return DirectoryMatch(query=cleaned_query, entry=None, score=best_score)
+        ranked = self._rank_candidates(cleaned_query)
+        if not ranked:
+            return DirectoryMatch(query=cleaned_query, entry=None, score=0.0, reason='no_candidates')
 
-        return DirectoryMatch(query=cleaned_query, entry=best_entry, score=best_score)
+        best_score, best_entry = ranked[0]
+        alternatives = tuple(entry.title for _, entry in ranked[1:4])
+        runner_up_gap = best_score - ranked[1][0] if len(ranked) > 1 else best_score
+
+        if best_score < 0.72 or runner_up_gap < 0.06:
+            return DirectoryMatch(
+                query=cleaned_query,
+                entry=None,
+                score=best_score,
+                reason='low_confidence',
+                alternatives=(best_entry.title,) + alternatives,
+            )
+
+        return DirectoryMatch(
+            query=cleaned_query,
+            entry=best_entry,
+            score=best_score,
+            reason='fuzzy_match',
+            alternatives=alternatives,
+        )
 
     def build_response(self, match: DirectoryMatch) -> str:
         if match.entry is None:
+            if match.alternatives:
+                suggestions = ', '.join(match.alternatives[:3])
+                return (
+                    f"Sorry, I couldn't confidently match {match.query}. "
+                    f'The closest public directory entries are {suggestions}.'
+                )
             return f"Sorry, I couldn't find {match.query} in the public SEIC directory."
 
         entry = match.entry
@@ -73,7 +117,10 @@ class SeicDirectory:
         detail = f'{entry.title} is listed at {entry.location}'
         if entry.floor and entry.floor != '0':
             detail += f' on floor {entry.floor}'
-        if 'not publicly listed' in entry.location.lower() or 'room not publicly listed' in entry.location.lower():
+        if (
+            'not publicly listed' in entry.location.lower()
+            or 'room not publicly listed' in entry.location.lower()
+        ):
             detail += ', but a public room number is not listed'
         return detail + '.'
 
@@ -145,6 +192,54 @@ class SeicDirectory:
 
         return entries
 
+    def _build_entry_aliases(self) -> Dict[DirectoryEntry, Set[str]]:
+        aliases: Dict[DirectoryEntry, Set[str]] = {}
+
+        for entry in self.entries:
+            entry_aliases = {
+                self._normalize_text(entry.title),
+                self._normalize_text(entry.location),
+            }
+            if entry.description and entry.kind != 'room':
+                entry_aliases.add(self._normalize_text(entry.description))
+
+            room_code = self._room_code(entry.title) or self._room_code(entry.location)
+            if room_code:
+                entry_aliases.update(
+                    {
+                        self._normalize_text(room_code),
+                        self._normalize_text(f'seic {room_code}'),
+                        self._normalize_text(f'room {room_code}'),
+                    }
+                )
+
+            if entry.kind == 'person':
+                last_name = entry.title.split()[-1]
+                entry_aliases.update(
+                    {
+                        self._normalize_text(last_name),
+                        self._normalize_text(f'professor {last_name}'),
+                        self._normalize_text(f'doctor {last_name}'),
+                        self._normalize_text(f'dr {last_name}'),
+                    }
+                )
+
+            if 'makerspace' in self._normalize_text(entry.title):
+                entry_aliases.add(self._normalize_text('makerspace'))
+
+            if 'machine shop' in self._normalize_text(entry.title):
+                entry_aliases.add(self._normalize_text('machine shop'))
+                entry_aliases.add(self._normalize_text('stockroom'))
+
+            if entry.kind == 'space':
+                entry_aliases.update(self._space_alias_variants(entry.title))
+
+            aliases[entry] = {
+                alias for alias in entry_aliases if alias and not self._is_generic_alias(alias)
+            }
+
+        return aliases
+
     def _default_workbook_path(self) -> str:
         candidates = []
 
@@ -189,57 +284,91 @@ class SeicDirectory:
         return rows
 
     def _normalize_query(self, text: str) -> str:
-        text = text.strip()
+        return self._normalize_text(text)
+
+    def _normalize_text(self, text: str) -> str:
+        text = text.strip().lower()
+        text = text.replace('&', ' and ')
+        text = re.sub(r'\bscience\s+and\s+engineering\s+innovation\s+center\b', 'seic', text)
+        text = re.sub(r'\bscience\s+and\s+engineering\b', 'seic', text)
+        text = re.sub(r'\bscience\s+engineering\b', 'seic', text)
+        text = re.sub(r'\bsci(?:ence)?\b', 'science', text)
+        text = re.sub(r'\bengr\b', 'engineering', text)
+        text = re.sub(r'\bprof\b', 'professor', text)
+        text = re.sub(r'\bdr\b\.?', 'doctor', text)
         text = re.sub(
-            r'\b(can you|please|help me|i need|take me to|where is|find|locate|go to|office|room|lab|location)\b',
+            r'\b(can you|could you|please|help me|i need|looking for|take me to|where is|'
+            r'find|locate|go to|show me|tell me|bring me to)\b',
             ' ',
             text,
-            flags=re.IGNORECASE,
         )
-        text = re.sub(r'\s+', ' ', text).strip(' .?')
+        text = re.sub(r'[^a-z0-9]+', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
 
-        room_match = re.search(r'(?:seic\s*)?(\d{3}[a-z]?)', text, flags=re.IGNORECASE)
+        room_match = re.search(r'\b(?:seic\s*)?(\d{3}[a-z]?)\b', text)
         if room_match:
-            return f'SEIC {room_match.group(1).upper()}'
+            return f'seic {room_match.group(1)}'
 
         return text
 
-    def _score_entry(self, query: str, entry: DirectoryEntry) -> float:
-        query_norm = self._tokenize(query)
-        if not query_norm:
+    def _match_by_room_number(self, query: str) -> Optional[DirectoryEntry]:
+        room_code = self._room_code(query)
+        if not room_code:
+            return None
+
+        target_room = f'SEIC {room_code}'
+        for entry in self.entries:
+            if entry.title.upper() == target_room or entry.location.upper() == target_room:
+                return entry
+        return None
+
+    def _match_by_alias(self, query: str) -> Optional[DirectoryEntry]:
+        for entry, aliases in self.entry_aliases.items():
+            if query in aliases:
+                return entry
+        return None
+
+    def _rank_candidates(self, query: str) -> List[Tuple[float, DirectoryEntry]]:
+        ranked: List[Tuple[float, DirectoryEntry]] = []
+        query_tokens = query.split()
+
+        for entry, aliases in self.entry_aliases.items():
+            score = max(self._score_alias(query, alias, query_tokens) for alias in aliases)
+            ranked.append((score, entry))
+
+        ranked.sort(key=lambda item: item[0], reverse=True)
+        return ranked
+
+    def _score_alias(self, query: str, alias: str, query_tokens: List[str]) -> float:
+        if not alias:
             return 0.0
 
-        candidates = [
-            entry.title,
-            entry.location,
-            entry.description,
-            entry.notes,
-        ]
-        candidate_text = ' '.join(part for part in candidates if part)
-        candidate_norm = self._tokenize(candidate_text)
-
-        if query_norm == self._tokenize(entry.title) or query_norm == self._tokenize(entry.location):
+        if query == alias:
             return 1.0
 
-        if query_norm in candidate_norm:
-            return 0.94
+        if query in alias or alias in query:
+            return 0.95
 
-        query_tokens = set(query_norm.split())
-        candidate_tokens = set(candidate_norm.split())
-        overlap = len(query_tokens & candidate_tokens) / max(1, len(query_tokens))
-        similarity = SequenceMatcher(None, query_norm, candidate_norm).ratio()
-        fuzzy_token_similarity = self._best_token_alignment(query_norm.split(), candidate_norm.split())
+        alias_tokens = alias.split()
+        overlap = len(set(query_tokens) & set(alias_tokens)) / max(1, len(set(query_tokens)))
+
+        if process is not None and fuzz is not None:
+            fuzzy_ratio = fuzz.ratio(query, alias) / 100.0
+            partial_ratio = fuzz.partial_ratio(query, alias) / 100.0
+            token_ratio = fuzz.token_set_ratio(query, alias) / 100.0
+            return max(
+                fuzzy_ratio * 0.35 + partial_ratio * 0.25 + token_ratio * 0.25 + overlap * 0.15,
+                token_ratio * 0.92,
+                partial_ratio * 0.88,
+            )
+
+        similarity = SequenceMatcher(None, query, alias).ratio()
+        fuzzy_token_similarity = self._best_token_alignment(query_tokens, alias_tokens)
         return max(
             similarity * 0.55 + overlap * 0.15 + fuzzy_token_similarity * 0.30,
-            overlap * 0.9,
+            overlap * 0.90,
             fuzzy_token_similarity * 0.92,
         )
-
-    def _tokenize(self, text: str) -> str:
-        text = text.lower()
-        text = text.replace('&', ' and ')
-        text = re.sub(r'[^a-z0-9]+', ' ', text)
-        return re.sub(r'\s+', ' ', text).strip()
 
     def _best_token_alignment(self, query_tokens, candidate_tokens) -> float:
         if not query_tokens or not candidate_tokens:
@@ -254,3 +383,38 @@ class SeicDirectory:
             scores.append(max(token_scores) if token_scores else 0.0)
 
         return sum(scores) / len(scores)
+
+    def _room_code(self, text: str) -> Optional[str]:
+        match = re.search(r'\b(?:seic\s*)?(\d{3}[a-z]?)\b', text, flags=re.IGNORECASE)
+        if not match:
+            return None
+        return match.group(1).upper()
+
+    def _space_alias_variants(self, title: str) -> Set[str]:
+        normalized_title = self._normalize_text(title)
+        variants = set()
+
+        if normalized_title.endswith(' lab') and ' and ' in normalized_title:
+            prefix = normalized_title[:-4]
+            for chunk in prefix.split(' and '):
+                chunk = chunk.strip()
+                if chunk:
+                    variants.add(f'{chunk} lab')
+
+        if normalized_title.endswith(' makerspace'):
+            prefix = normalized_title[:-11].strip()
+            if prefix:
+                variants.add(prefix)
+
+        return variants
+
+    def _is_generic_alias(self, alias: str) -> bool:
+        generic_aliases = {
+            'lab',
+            'classroom',
+            'lecture hall',
+            'study room',
+            'office',
+            'space',
+        }
+        return alias in generic_aliases or len(alias.split()) == 1 and alias in {'room', 'floor'}

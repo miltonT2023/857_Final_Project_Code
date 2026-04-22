@@ -3,6 +3,7 @@ pygame
 opencv-python
 ultralytics
 pytest
+rapidfuzz
 
 # ROS 2 dependencies used by the nodes are typically installed via apt/rosdep,
 # not pip: rclpy, ament_index_python, cv_bridge, sensor_msgs, std_msgs,

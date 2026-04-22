@@ -1,94 +1,94 @@
 import re
-import shutil
-import subprocess
-from typing import Optional
 
 
 class RobotInterpreter:
-    def __init__(self, model: str = 'llama3.2:latest', timeout_sec: float = 5.0):
-        self.model = model
-        self.timeout_sec = timeout_sec
-        self.ollama_path = shutil.which('ollama')
+    """Normalize free-form requests into a lookup-friendly destination string."""
+
+    _ROOM_PATTERN = re.compile(r'\b(?:seic\s*)?(\d{3}[a-z]?)\b', flags=re.IGNORECASE)
+    _LEADING_PHRASES = (
+        'can you tell me where',
+        'can you show me where',
+        'can you help me find',
+        'can you help me get to',
+        'could you tell me where',
+        'could you help me find',
+        'i am looking for',
+        'i m looking for',
+        'i need',
+        'i need to find',
+        'i need to go to',
+        'take me to',
+        'bring me to',
+        'where can i find',
+        'where do i find',
+        'where is',
+        'where s',
+        'find',
+        'locate',
+        'go to',
+        'show me',
+        'help me find',
+        'help me get to',
+    )
+
+    _FILLER_WORDS = re.compile(
+        r'\b('
+        r'please|the|a|an|building|room|office|location|place|destination|'
+        r'to|for|at|in|on|near|thanks|thank you'
+        r')\b',
+        flags=re.IGNORECASE,
+    )
+
+    _ALIAS_REPLACEMENTS = (
+        (re.compile(r'&'), ' and '),
+        (re.compile(r'\bsci(?:ence)?\b', flags=re.IGNORECASE), 'science'),
+        (re.compile(r'\bengr\b', flags=re.IGNORECASE), 'engineering'),
+        (
+            re.compile(
+                r'\bscience\s+and\s+engineering\s+innovation\s+center\b',
+                flags=re.IGNORECASE,
+            ),
+            'seic',
+        ),
+        (
+            re.compile(r'\bscience\s+and\s+engineering\b', flags=re.IGNORECASE),
+            'seic',
+        ),
+        (
+            re.compile(r'\bscience\s+engineering\b', flags=re.IGNORECASE),
+            'seic',
+        ),
+        (
+            re.compile(r'\bprof\b', flags=re.IGNORECASE),
+            'professor',
+        ),
+        (
+            re.compile(r'\bdr\b\.?', flags=re.IGNORECASE),
+            'doctor',
+        ),
+    )
 
     def extract_target(self, user_text: str) -> str:
         cleaned = ' '.join(user_text.strip().split())
         if not cleaned:
             return ''
 
-        heuristic = self._heuristic_extract(cleaned)
-        if self._should_skip_llm(cleaned, heuristic):
-            return heuristic
-
-        llm_target = self._llm_extract(cleaned)
-
-        if llm_target:
-            return llm_target
-        return heuristic
-
-    def _should_skip_llm(self, original_text: str, heuristic: str) -> bool:
-        if not heuristic:
-            return False
-
-        if heuristic.upper().startswith('SEIC '):
-            return True
-
-        word_count = len(heuristic.split())
-        if word_count <= 4:
-            return True
-
-        original_word_count = len(original_text.split())
-        return original_word_count <= 5
-
-    def _heuristic_extract(self, text: str) -> str:
-        room_match = re.search(r'(?:seic\s*)?(\d{3}[a-z]?)', text, flags=re.IGNORECASE)
+        room_match = self._ROOM_PATTERN.search(cleaned)
         if room_match:
             return f'SEIC {room_match.group(1).upper()}'
 
-        stripped = re.sub(
-            r'\b(hi|hello|hey|can you|could you|please|help me|i need|i am looking for|looking for|take me to|where is|find|locate|go to|room|office)\b',
-            ' ',
-            text,
-            flags=re.IGNORECASE,
-        )
-        stripped = re.sub(r'\s+', ' ', stripped).strip(' .?')
-        return stripped or text
+        normalized = cleaned.lower()
+        for pattern, replacement in self._ALIAS_REPLACEMENTS:
+            normalized = pattern.sub(replacement, normalized)
 
-    def _llm_extract(self, text: str) -> Optional[str]:
-        if not self.ollama_path:
-            return None
+        normalized = normalized.replace('?', ' ').replace('.', ' ').replace(',', ' ')
 
-        prompt = (
-            'Extract only the destination, room, office, person, or named place from the sentence. '
-            'Return only the target text with no explanation.\n'
-            f'Input: {text}\n'
-            'Target:'
-        )
+        for phrase in self._LEADING_PHRASES:
+            if normalized.startswith(phrase):
+                normalized = normalized[len(phrase):].strip()
+                break
 
-        try:
-            result = subprocess.run(
-                [self.ollama_path, 'run', self.model, prompt],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_sec,
-            )
-        except (OSError, subprocess.SubprocessError, subprocess.TimeoutExpired):
-            return None
+        normalized = self._FILLER_WORDS.sub(' ', normalized)
+        normalized = re.sub(r'\s+', ' ', normalized).strip(" .'\"")
 
-        if result.returncode != 0:
-            return None
-
-        output = self._clean_output(result.stdout)
-        if not output:
-            return None
-        return output
-
-    def _clean_output(self, text: str) -> str:
-        text = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', text)
-        text = ' '.join(text.replace('\r', ' ').split())
-        if 'Target:' in text:
-            text = text.split('Target:', 1)[-1].strip()
-        text = text.strip(' "\'')
-        if len(text.split()) > 8:
-            return ''
-        return text
+        return normalized or cleaned
