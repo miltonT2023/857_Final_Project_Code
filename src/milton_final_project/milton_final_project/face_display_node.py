@@ -484,7 +484,7 @@ class FaceDisplayNode(Node):
             self.set_override(expression='confused', message='I am still processing the last request.')
             return
 
-            self.set_override(expression='confused', message=f'Looking up {destination} in the SEIC directory.')
+        self.set_override(expression='confused', message=f'Looking up {destination} in the SEIC directory.')
         self.pending_future = self.assistant_pool.submit(self.lookup_destination, destination)
 
     def lookup_destination(self, destination: str):
@@ -555,10 +555,6 @@ class FaceDisplayNode(Node):
             self.process_destination()
         elif key == pygame.K_BACKSPACE:
             self.input_buffer = self.input_buffer[:-1]
-        elif key == pygame.K_LEFT:
-            self.cycle_expression(-1)
-        elif key == pygame.K_RIGHT:
-            self.cycle_expression(1)
         elif key == pygame.K_h:
             self.show_help = not self.show_help
 
