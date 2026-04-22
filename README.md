@@ -24,6 +24,7 @@ python robot_face.py
 ```bash
 cd /home/nvidia/Milton_Final_Project
 source /opt/ros/humble/setup.bash
+colcon build
 source install/setup.bash
 ros2 launch milton_final_project face_yolo_launch.py
 ```
@@ -33,6 +34,7 @@ ros2 launch milton_final_project face_yolo_launch.py
 ```bash
 cd /home/nvidia/Milton_Final_Project
 source /opt/ros/humble/setup.bash
+colcon build
 source install/setup.bash
 ros2 run milton_final_project wayfinding_input_node
 ```
@@ -95,3 +97,5 @@ through `pip`.
 
 These generated folders are useful for running the project locally after a build,
 but they are not the primary source files you edit during development.
+They are intentionally ignored by Git so the repository stays focused on source,
+assets, data, documentation, and the model file.
