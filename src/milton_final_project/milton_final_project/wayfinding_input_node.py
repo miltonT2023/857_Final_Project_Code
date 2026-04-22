@@ -21,7 +21,7 @@ class WayfindingInputNode(Node):
         self.directory = SeicDirectory()
 
         self.publish_message("Hi, I'm the navigation robot that helps you find a location or room.")
-        self.publish_expression('confused')
+        self.publish_expression('neutral')
 
         self.input_thread = Thread(target=self.read_loop, daemon=True)
         self.input_thread.start()
@@ -48,7 +48,7 @@ class WayfindingInputNode(Node):
                 break
 
             if not destination:
-                self.publish_expression('confused')
+                self.publish_expression('neutral')
                 self.publish_message("Hi, I'm the navigation robot that helps you find a location or room.")
                 continue
 
@@ -57,7 +57,7 @@ class WayfindingInputNode(Node):
                 self.publish_expression(ending['expression'])
                 self.publish_message(ending['message'])
                 time.sleep(2.0)
-                self.publish_expression('confused')
+                self.publish_expression('neutral')
                 self.publish_message(
                     "Hi, I'm the navigation robot that helps you find a location or room."
                 )
@@ -87,23 +87,23 @@ class WayfindingInputNode(Node):
                 break
 
             if answer in {'yes', 'y', 'yeah', 'yep', 'sure', 'ok', 'okay'}:
-                self.publish_expression('ready_to_go')
+                self.publish_expression('happy')
                 self.publish_message(
                     f"Let's go. Going to navigation mode for {destination_label}."
                 )
                 time.sleep(self.response_duration_sec)
-                self.publish_expression('confused')
+                self.publish_expression('neutral')
                 self.publish_message(
                     "Hi, I'm the navigation robot that helps you find a location or room."
                 )
                 continue
 
-            self.publish_expression('happy')
+            self.publish_expression('neutral')
             self.publish_message(
                 'Okay. If you need anything else, ask me about another room or person.'
             )
             time.sleep(2.0)
-            self.publish_expression('confused')
+            self.publish_expression('neutral')
             self.publish_message(
                 "Hi, I'm the navigation robot that helps you find a location or room."
             )

@@ -43,7 +43,7 @@ def generate_launch_description():
             {'height': 600},
             {'fullscreen': True},
             {'show_help': False},
-            {'initial_expression': 'confused'},
+            {'initial_expression': 'neutral'},
             {
                 'waiting_message':
                 "Hi, I'm the navigation robot that helps you find a location or room."

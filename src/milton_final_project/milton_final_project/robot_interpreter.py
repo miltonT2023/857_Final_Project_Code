@@ -93,7 +93,7 @@ class RobotInterpreter:
                 'message': 'Goodbye. Come back if you need help finding another location.',
             }
         return {
-            'expression': 'thank_you',
+            'expression': 'happy',
             'message': "You're welcome. Let me know if you need help with another location.",
         }
 

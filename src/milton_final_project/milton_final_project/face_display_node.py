@@ -32,7 +32,7 @@ class FaceDisplayNode(Node):
         self.declare_parameter('height', 600)
         self.declare_parameter('fullscreen', True)
         self.declare_parameter('show_help', False)
-        self.declare_parameter('initial_expression', 'confused')
+        self.declare_parameter('initial_expression', 'neutral')
         self.declare_parameter(
             'waiting_message',
             "Hi, I'm the navigation robot that helps you find a location or room.",
@@ -81,30 +81,14 @@ class FaceDisplayNode(Node):
         self.background = self.load_image('happy/background-min.png')
 
         self.expression_order = [
-            'annoyed',
-            'anxious',
-            'apologetic',
-            'awkward',
-            'blinking',
-            'bored',
+            'neutral',
             'happy',
             'confused',
-            'ready_to_go',
-            'so_excited',
-            'thank_you',
         ]
         self.expressions = {
-            'annoyed': AssetExpression('annoyed', 'Annoyed', 'annoyed', 150, 108, 48),
-            'anxious': AssetExpression('anxious', 'Anxious', 'anxious', 154, 102, 54),
-            'apologetic': AssetExpression('apologetic', 'Apologetic', 'apologetic', 170, 106, 50),
-            'awkward': AssetExpression('awkward', 'Awkward', 'awkward', 146, 108, 54),
-            'blinking': AssetExpression('blinking', 'Blinking', 'blinking', 14, 76, 6),
-            'bored': AssetExpression('bored', 'Bored', 'bored', 124, 104, 48),
+            'neutral': AssetExpression('neutral', 'Neutral', 'bored', 124, 104, 48),
             'happy': AssetExpression('happy', 'Happy', 'happy', 58, 108, 6),
             'confused': AssetExpression('confused', 'Confused', 'thinking', 118, 118, 56),
-            'ready_to_go': AssetExpression('ready_to_go', 'Ready To Go', 'determined', 134, 110, 52),
-            'so_excited': AssetExpression('so_excited', 'So Excited', 'excited', 140, 110, 50),
-            'thank_you': AssetExpression('thank_you', 'Thank You', 'giggle', 48, 106, 8),
         }
         self.loaded_eyes = {
             name: {
@@ -116,7 +100,9 @@ class FaceDisplayNode(Node):
 
         self.waiting_message = self.get_parameter('waiting_message').value
         self.current_message = self.waiting_message
-        self.idle_expression = self.get_parameter('initial_expression').value
+        self.idle_expression = self.normalize_expression(
+            self.get_parameter('initial_expression').value
+        )
         self.active_expression = self.idle_expression
         self.override_expression = None
         self.override_message = None
@@ -163,13 +149,21 @@ class FaceDisplayNode(Node):
         return pygame.image.load(path).convert_alpha()
 
     def set_expression(self, name: str):
-        if name in self.expressions:
-            self.expression_index = self.expression_order.index(name)
+        normalized = self.normalize_expression(name)
+        if normalized in self.expressions:
+            self.expression_index = self.expression_order.index(normalized)
 
     def cycle_expression(self, direction: int):
         self.expression_index = (self.expression_index + direction) % len(self.expression_order)
         self.idle_expression = self.expression_order[self.expression_index]
         self.active_expression = self.idle_expression
+
+    def normalize_expression(self, name: str) -> str:
+        if name == 'happy':
+            return 'happy'
+        if name == 'confused':
+            return 'confused'
+        return 'neutral'
 
     def current_expression(self) -> AssetExpression:
         return self.expressions[self.expression_order[self.expression_index]]
@@ -194,10 +188,11 @@ class FaceDisplayNode(Node):
         return '...' + shortened if shortened else ''
 
     def set_override(self, expression=None, message=None):
-        if expression in self.expressions:
-            self.override_expression = expression
-            self.active_expression = expression
-            self.set_expression(expression)
+        if expression is not None:
+            normalized_expression = self.normalize_expression(expression)
+            self.override_expression = normalized_expression
+            self.active_expression = normalized_expression
+            self.set_expression(normalized_expression)
 
         if message is not None:
             self.override_message = message
@@ -241,11 +236,7 @@ class FaceDisplayNode(Node):
         return int(math.sin(elapsed * 0.9) * 18)
 
     def is_blinking(self):
-        if self.override_until is not None:
-            return False
-
-        elapsed = self.get_clock().now().nanoseconds / 1e9
-        return elapsed % 5.0 < 0.18
+        return False
 
     def current_face_offset_y(self):
         if self.override_expression == 'happy':
@@ -284,8 +275,7 @@ class FaceDisplayNode(Node):
 
     def draw_expression(self):
         expr = self.current_expression()
-        blink_mode = self.is_blinking()
-        active_expr = self.expressions['blinking'] if blink_mode else expr
+        active_expr = expr
         eyes = self.loaded_eyes[active_expr.name]
         left_eye = self.scaled_surface(eyes['left'], active_expr.eye_height)
         right_eye = self.scaled_surface(eyes['right'], active_expr.eye_height)
@@ -466,16 +456,10 @@ class FaceDisplayNode(Node):
             return
 
         if self.pending_future is not None and not self.pending_future.done():
-            self.set_override(
-                expression='confused',
-                message='I am still processing the last request.',
-            )
+            self.set_override(expression='confused', message='I am still processing the last request.')
             return
 
-        self.set_override(
-            expression='confused',
-            message=f'Looking up {destination} in the SEIC directory.',
-        )
+            self.set_override(expression='confused', message=f'Looking up {destination} in the SEIC directory.')
         self.pending_future = self.assistant_pool.submit(self.lookup_destination, destination)
 
     def lookup_destination(self, destination: str):
@@ -514,15 +498,15 @@ class FaceDisplayNode(Node):
             self.override_expression = None
             self.override_message = None
             self.override_until = None
-            self.active_expression = 'ready_to_go'
-            self.set_expression('ready_to_go')
+            self.active_expression = 'happy'
+            self.set_expression('happy')
             self.current_message = 'Going to navigation mode.'
             self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
             return
 
         if normalized in no_tokens:
             self.set_override(
-                expression='happy',
+                expression='neutral',
                 message='Okay. If you need anything else, ask me about another room or person.',
             )
             self.awaiting_confirmation = False
@@ -567,7 +551,7 @@ class FaceDisplayNode(Node):
             except Exception as exc:
                 self.get_logger().warning(f'Assistant reply failed: {exc}')
                 self.set_override(
-                    expression='apologetic',
+                    expression='confused',
                     message='Sorry, I had trouble thinking of a reply just now.',
                 )
             finally:

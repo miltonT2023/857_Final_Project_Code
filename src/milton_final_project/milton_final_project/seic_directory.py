@@ -127,9 +127,7 @@ class SeicDirectory:
     def expression_for_match(self, match: DirectoryMatch) -> str:
         if match.entry is None:
             return 'confused'
-        if match.entry.kind == 'person':
-            return 'happy'
-        return 'ready_to_go'
+        return 'happy'
 
     def _load_entries(self) -> List[DirectoryEntry]:
         shared_strings = []
