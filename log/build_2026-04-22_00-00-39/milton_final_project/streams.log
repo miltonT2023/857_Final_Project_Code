@@ -1,0 +1,28 @@
+[2.677s] Invoking command in '/home/nvidia/Milton_Final_Project/src/milton_final_project': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data
+[3.656s] running egg_info
+[3.694s] writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO
+[3.695s] writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt
+[3.696s] writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt
+[3.696s] writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt
+[3.697s] writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt
+[3.774s] reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.775s] adding license file 'LICENSE'
+[3.776s] writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.778s] running build
+[3.779s] running build_py
+[3.779s] copying milton_final_project/robot_assistant.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project
+[3.779s] running install
+[3.790s] running install_lib
+[3.827s] copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/robot_assistant.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project
+[3.829s] byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/robot_assistant.py to robot_assistant.cpython-38.pyc
+[3.832s] running install_data
+[3.833s] running install_egg_info
+[3.872s] removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)
+[3.874s] Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info
+[3.875s] running install_scripts
+[4.018s] Installing face_display_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.019s] Installing wayfinding_input_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.019s] Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.020s] Installing yolo_web_stream script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.020s] writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'
+[4.134s] Invoked command in '/home/nvidia/Milton_Final_Project/src/milton_final_project' returned '0': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data

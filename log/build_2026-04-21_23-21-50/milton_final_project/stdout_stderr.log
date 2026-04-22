@@ -1,0 +1,63 @@
+running egg_info
+writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO
+writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt
+writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt
+writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt
+writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt
+reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+running build
+running build_py
+copying milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project
+running install
+running install_lib
+copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project
+byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/face_display_node.py to face_display_node.cpython-38.pyc
+running install_data
+copying package.xml -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project
+copying launch/face_yolo_launch.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/launch
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/excited
+copying ../../assets/kaia_face/excited/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/excited
+copying ../../assets/kaia_face/excited/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/excited
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/giggle
+copying ../../assets/kaia_face/giggle/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/giggle
+copying ../../assets/kaia_face/giggle/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/giggle
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/blinking
+copying ../../assets/kaia_face/blinking/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/blinking
+copying ../../assets/kaia_face/blinking/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/blinking
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/bored
+copying ../../assets/kaia_face/bored/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/bored
+copying ../../assets/kaia_face/bored/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/bored
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/awkward
+copying ../../assets/kaia_face/awkward/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/awkward
+copying ../../assets/kaia_face/awkward/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/awkward
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/happy
+copying ../../assets/kaia_face/happy/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/happy
+copying ../../assets/kaia_face/happy/background-min.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/happy
+copying ../../assets/kaia_face/happy/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/happy
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/determined
+copying ../../assets/kaia_face/determined/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/determined
+copying ../../assets/kaia_face/determined/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/determined
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/annoyed
+copying ../../assets/kaia_face/annoyed/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/annoyed
+copying ../../assets/kaia_face/annoyed/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/annoyed
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/apologetic
+copying ../../assets/kaia_face/apologetic/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/apologetic
+copying ../../assets/kaia_face/apologetic/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/apologetic
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/anxious
+copying ../../assets/kaia_face/anxious/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/anxious
+copying ../../assets/kaia_face/anxious/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/anxious
+creating /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/thinking
+copying ../../assets/kaia_face/thinking/right-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/thinking
+copying ../../assets/kaia_face/thinking/left-eye.png -> /home/nvidia/Milton_Final_Project/install/milton_final_project/share/milton_final_project/assets/kaia_face/thinking
+running install_egg_info
+removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)
+Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info
+running install_scripts
+Installing face_display_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+Installing yolo_web_stream script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'

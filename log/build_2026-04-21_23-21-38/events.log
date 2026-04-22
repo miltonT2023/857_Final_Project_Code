@@ -1,0 +1,15 @@
+[0.000000] (-) TimerEvent: {}
+[0.000240] (milton_final_project) JobQueued: {'identifier': 'milton_final_project', 'dependencies': OrderedDict()}
+[0.001071] (milton_final_project) JobStarted: {'identifier': 'milton_final_project'}
+[0.099509] (-) TimerEvent: {}
+[0.199923] (-) TimerEvent: {}
+[0.300286] (-) TimerEvent: {}
+[0.400684] (-) TimerEvent: {}
+[0.501036] (-) TimerEvent: {}
+[0.601397] (-) TimerEvent: {}
+[0.701728] (-) TimerEvent: {}
+[0.802060] (-) TimerEvent: {}
+[0.902438] (-) TimerEvent: {}
+[0.931214] (milton_final_project) StderrLine: {'line': b'Traceback (most recent call last):\n  File "/usr/lib/python3/dist-packages/colcon_core/executor/__init__.py", line 91, in __call__\n    rc = await self.task(*args, **kwargs)\n  File "/usr/lib/python3/dist-packages/colcon_core/task/__init__.py", line 93, in __call__\n    return await task_method(*args, **kwargs)\n  File "/usr/lib/python3/dist-packages/colcon_ros/task/ament_python/build.py", line 54, in build\n    data_files = get_data_files_mapping(\n  File "/usr/lib/python3/dist-packages/colcon_core/task/python/__init__.py", line 42, in get_data_files_mapping\n    assert not os.path.isabs(source), \\\nAssertionError: \'data_files\' must be relative, \'/home/nvidia/Milton_Final_Project/assets/kaia_face/excited/right-eye.png\' is absolute\n'}
+[0.933304] (milton_final_project) JobEnded: {'identifier': 'milton_final_project', 'rc': 1}
+[0.942944] (-) EventReactorShutdown: {}

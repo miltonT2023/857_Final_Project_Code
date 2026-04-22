@@ -1,0 +1,34 @@
+[2.840s] Invoking command in '/home/nvidia/Milton_Final_Project/src/milton_final_project': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data
+[3.795s] running egg_info
+[3.831s] writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO
+[3.832s] writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt
+[3.832s] writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt
+[3.833s] writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt
+[3.833s] writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt
+[3.913s] reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.913s] adding license file 'LICENSE'
+[3.915s] writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'
+[3.915s] running build
+[3.916s] running build_py
+[3.916s] copying milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project
+[3.916s] copying milton_final_project/wayfinding_input_node.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project
+[3.917s] copying milton_final_project/robot_assistant.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project
+[3.917s] running install
+[3.928s] running install_lib
+[3.965s] copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project
+[3.965s] copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/wayfinding_input_node.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project
+[3.966s] copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/robot_assistant.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project
+[3.967s] byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/face_display_node.py to face_display_node.cpython-38.pyc
+[3.973s] byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/wayfinding_input_node.py to wayfinding_input_node.cpython-38.pyc
+[3.974s] byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/robot_assistant.py to robot_assistant.cpython-38.pyc
+[3.976s] running install_data
+[3.979s] running install_egg_info
+[4.018s] removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)
+[4.018s] Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info
+[4.020s] running install_scripts
+[4.161s] Installing face_display_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.161s] Installing wayfinding_input_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.162s] Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.162s] Installing yolo_web_stream script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project
+[4.162s] writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'
+[4.273s] Invoked command in '/home/nvidia/Milton_Final_Project/src/milton_final_project' returned '0': PYTHONPATH=/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/milton_final_project build --build-base /home/nvidia/Milton_Final_Project/build/milton_final_project/build install --record /home/nvidia/Milton_Final_Project/build/milton_final_project/install.log --single-version-externally-managed install_data

@@ -1,0 +1,76 @@
+[0.000000] (-) TimerEvent: {}
+[0.000286] (milton_final_project) JobQueued: {'identifier': 'milton_final_project', 'dependencies': OrderedDict()}
+[0.001052] (milton_final_project) JobStarted: {'identifier': 'milton_final_project'}
+[0.099391] (-) TimerEvent: {}
+[0.199831] (-) TimerEvent: {}
+[0.300229] (-) TimerEvent: {}
+[0.400705] (-) TimerEvent: {}
+[0.501142] (-) TimerEvent: {}
+[0.601595] (-) TimerEvent: {}
+[0.702030] (-) TimerEvent: {}
+[0.802384] (-) TimerEvent: {}
+[0.902734] (-) TimerEvent: {}
+[1.003105] (-) TimerEvent: {}
+[1.103552] (-) TimerEvent: {}
+[1.203955] (-) TimerEvent: {}
+[1.304312] (-) TimerEvent: {}
+[1.404663] (-) TimerEvent: {}
+[1.505010] (-) TimerEvent: {}
+[1.605353] (-) TimerEvent: {}
+[1.705711] (-) TimerEvent: {}
+[1.806083] (-) TimerEvent: {}
+[1.906432] (-) TimerEvent: {}
+[2.006807] (-) TimerEvent: {}
+[2.107173] (-) TimerEvent: {}
+[2.207524] (-) TimerEvent: {}
+[2.307860] (-) TimerEvent: {}
+[2.408210] (-) TimerEvent: {}
+[2.508540] (-) TimerEvent: {}
+[2.608914] (-) TimerEvent: {}
+[2.709386] (-) TimerEvent: {}
+[2.809857] (-) TimerEvent: {}
+[2.853350] (milton_final_project) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/milton_final_project', 'build', '--build-base', '/home/nvidia/Milton_Final_Project/build/milton_final_project/build', 'install', '--record', '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/nvidia/Milton_Final_Project/src/milton_final_project', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'VSCODE_CWD': '/home/nvidia', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'CODEX_CI': '1', 'USER': 'nvidia', 'SSH_CLIENT': '192.168.2.58 50101 22', 'CODEX_INTERNAL_ORIGINATOR_OVERRIDE': 'codex_vscode', 'VSCODE_NLS_CONFIG': '{"userLocale":"en","osLocale":"en","resolvedLanguage":"en","defaultMessagesFile":"/home/nvidia/.vscode-server/cli/servers/Stable-560a9dba96f961efea7b1612916f89e5d5d4d679/server/out/nls.messages.json","locale":"en","availableLanguages":{}}', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'XDG_SESSION_TYPE': 'tty', 'DEBUG': 'release', 'SHLVL': '0', 'LD_LIBRARY_PATH': '/usr/local/cuda/lib64:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib:/usr/local/cuda/lib64:/usr/local/cuda/lib64:', 'BROWSER': '/home/nvidia/.vscode-server/cli/servers/Stable-560a9dba96f961efea7b1612916f89e5d5d4d679/server/bin/helpers/browser.sh', 'MOTD_SHOWN': 'pam', 'HOME': '/home/nvidia', 'VSCODE_RECONNECTION_GRACE_TIME': '10800000', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-852d8f54-22e3-4d68-a88e-cf7ca5ee7488.sock', 'ROS_PYTHON_VERSION': '3', 'PAGER': 'cat', 'LC_CTYPE': 'C.UTF-8', 'NO_COLOR': '1', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': '', 'COLCON_PREFIX_PATH': '/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/teleop/install:/home/nvidia/ros2/install', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'ROS_DISTRO': 'humble', 'LOGNAME': 'nvidia', 'VSCODE_HANDLES_SIGPIPE': 'true', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'RUST_LOG': 'warn', 'TERM': 'dumb', 'XDG_SESSION_ID': '5', 'VSCODE_CLI_REQUIRE_TOKEN': '6609e076-3683-4626-b988-7af5372be1ab', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/usr/local/cuda/bin:/home/nvidia/.codex/tmp/arg0/codex-arg092PGJm:/home/nvidia/.vscode-server/cli/servers/Stable-560a9dba96f961efea7b1612916f89e5d5d4d679/server/bin/remote-cli:/opt/ros/humble/bin:/usr/local/cuda/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/nvidia/.vscode-server/extensions/openai.chatgpt-26.417.40842/bin/linux-aarch64', 'VSCODE_AGENT_FOLDER': '/home/nvidia/.vscode-server', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'C.UTF-8', 'GH_PAGER': 'cat', 'LS_COLORS': '', 'AMENT_PREFIX_PATH': '/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/teleop:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/py_pubsub:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/hri_nodes:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/teleop:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/py_pubsub:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/hri_nodes:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/teleop/install/teleop:/home/nvidia/ros2/install/teleop:/home/nvidia/ros2/install/qbot_platform:/home/nvidia/ros2/install/qbot_follower_ros2:/opt/ros/humble', 'SHELL': '/bin/bash', 'ELECTRON_RUN_AS_NODE': '1', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'CODEX_THREAD_ID': '019db24d-df2d-7462-b0e4-cdea78777182', 'GIT_PAGER': 'cat', 'PWD': '/home/nvidia/Milton_Final_Project/build/milton_final_project', 'LC_ALL': 'C.UTF-8', 'SSH_CONNECTION': '192.168.2.58 50101 192.168.2.15 22', 'XDG_DATA_DIRS': '/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/nvidia/Milton_Final_Project/build/milton_final_project/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/teleop/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/py_pubsub/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/install/hri_nodes/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/teleop/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/py_pubsub/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/install/hri_nodes/lib/python3.8/site-packages:/home/nvidia/ENGR857_Huang_Kevin/ros2_ws/src/teleop/install/teleop/lib/python3.8/site-packages:/home/nvidia/ros2/install/teleop/lib/python3.8/site-packages:/opt/ros/humble/lib/python3.8/site-packages:/home/nvidia/Documents/Quanser/libraries/python', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/nvidia/ros2/install/qbot_platform:/home/nvidia/ros2/install/qbot_follower_ros2'}, 'shell': False}
+[2.910016] (-) TimerEvent: {}
+[3.010378] (-) TimerEvent: {}
+[3.110730] (-) TimerEvent: {}
+[3.211112] (-) TimerEvent: {}
+[3.311458] (-) TimerEvent: {}
+[3.411795] (-) TimerEvent: {}
+[3.512144] (-) TimerEvent: {}
+[3.612482] (-) TimerEvent: {}
+[3.712847] (-) TimerEvent: {}
+[3.813190] (-) TimerEvent: {}
+[3.858327] (milton_final_project) StdoutLine: {'line': b'running egg_info\n'}
+[3.895465] (milton_final_project) StdoutLine: {'line': b'writing ../../build/milton_final_project/milton_final_project.egg-info/PKG-INFO\n'}
+[3.896186] (milton_final_project) StdoutLine: {'line': b'writing dependency_links to ../../build/milton_final_project/milton_final_project.egg-info/dependency_links.txt\n'}
+[3.896679] (milton_final_project) StdoutLine: {'line': b'writing entry points to ../../build/milton_final_project/milton_final_project.egg-info/entry_points.txt\n'}
+[3.897129] (milton_final_project) StdoutLine: {'line': b'writing requirements to ../../build/milton_final_project/milton_final_project.egg-info/requires.txt\n'}
+[3.897450] (milton_final_project) StdoutLine: {'line': b'writing top-level names to ../../build/milton_final_project/milton_final_project.egg-info/top_level.txt\n'}
+[3.913298] (-) TimerEvent: {}
+[3.976407] (milton_final_project) StdoutLine: {'line': b"reading manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'\n"}
+[3.977068] (milton_final_project) StdoutLine: {'line': b"adding license file 'LICENSE'\n"}
+[3.978994] (milton_final_project) StdoutLine: {'line': b"writing manifest file '../../build/milton_final_project/milton_final_project.egg-info/SOURCES.txt'\n"}
+[3.979374] (milton_final_project) StdoutLine: {'line': b'running build\n'}
+[3.979550] (milton_final_project) StdoutLine: {'line': b'running build_py\n'}
+[3.980040] (milton_final_project) StdoutLine: {'line': b'copying milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project\n'}
+[3.980792] (milton_final_project) StdoutLine: {'line': b'running install\n'}
+[3.992761] (milton_final_project) StdoutLine: {'line': b'running install_lib\n'}
+[4.013416] (-) TimerEvent: {}
+[4.030371] (milton_final_project) StdoutLine: {'line': b'copying /home/nvidia/Milton_Final_Project/build/milton_final_project/build/lib/milton_final_project/face_display_node.py -> /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project\n'}
+[4.031984] (milton_final_project) StdoutLine: {'line': b'byte-compiling /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project/face_display_node.py to face_display_node.cpython-38.pyc\n'}
+[4.037867] (milton_final_project) StdoutLine: {'line': b'running install_data\n'}
+[4.039558] (milton_final_project) StdoutLine: {'line': b'running install_egg_info\n'}
+[4.077897] (milton_final_project) StdoutLine: {'line': b"removing '/home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info' (and everything under it)\n"}
+[4.078547] (milton_final_project) StdoutLine: {'line': b'Copying ../../build/milton_final_project/milton_final_project.egg-info to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/python3.8/site-packages/milton_final_project-0.0.0-py3.8.egg-info\n'}
+[4.080487] (milton_final_project) StdoutLine: {'line': b'running install_scripts\n'}
+[4.113559] (-) TimerEvent: {}
+[4.213903] (-) TimerEvent: {}
+[4.223261] (milton_final_project) StdoutLine: {'line': b'Installing face_display_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project\n'}
+[4.224353] (milton_final_project) StdoutLine: {'line': b'Installing wayfinding_input_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project\n'}
+[4.224640] (milton_final_project) StdoutLine: {'line': b'Installing yolo_node script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project\n'}
+[4.224827] (milton_final_project) StdoutLine: {'line': b'Installing yolo_web_stream script to /home/nvidia/Milton_Final_Project/install/milton_final_project/lib/milton_final_project\n'}
+[4.225121] (milton_final_project) StdoutLine: {'line': b"writing list of installed files to '/home/nvidia/Milton_Final_Project/build/milton_final_project/install.log'\n"}
+[4.314086] (-) TimerEvent: {}
+[4.343478] (milton_final_project) CommandEnded: {'returncode': 0}
+[4.382674] (milton_final_project) JobEnded: {'identifier': 'milton_final_project', 'rc': 0}
+[4.384477] (-) EventReactorShutdown: {}
