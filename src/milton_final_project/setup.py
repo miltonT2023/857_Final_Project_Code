@@ -66,6 +66,8 @@ setup(
             'wayfinding_input_node = milton_final_project.wayfinding_input_node:main',
             'wayfinding_history_node = milton_final_project.wayfinding_history_node:main',
             'yolo_node = milton_final_project.yolo_node:main',
+            'lidar_person_tracker_node = milton_final_project.lidar_person_tracker_node:main',
+            'waiting_person_greeter_node = milton_final_project.waiting_person_greeter_node:main',
             'yolo_web_stream = milton_final_project.yolo_web_stream:main',
             'light_controller_node = milton_final_project.light_controller_node:main',
         ],

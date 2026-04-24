@@ -73,10 +73,26 @@ def generate_launch_description():
         output='screen',
     )
 
+    lidar_person_tracker_node = Node(
+        package='milton_final_project',
+        executable='lidar_person_tracker_node',
+        name='lidar_person_tracker_node',
+        output='screen',
+    )
+
+    waiting_person_greeter_node = Node(
+        package='milton_final_project',
+        executable='waiting_person_greeter_node',
+        name='waiting_person_greeter_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         qbot_platform_launch,
         realsense_launch,
         yolo_node,
+        lidar_person_tracker_node,
+        waiting_person_greeter_node,
         face_display_node,
         light_controller_node,
     ])

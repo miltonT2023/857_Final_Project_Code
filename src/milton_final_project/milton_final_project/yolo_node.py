@@ -1,11 +1,14 @@
 import rclpy
+import json
+from pathlib import Path
+
+import cv2
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from cv_bridge import CvBridge
-import cv2
 import numpy as np
-from pathlib import Path
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from ultralytics import YOLO
 
 
@@ -20,11 +23,15 @@ class YoloNode(Node):
             '/camera/aligned_depth_to_color/image_raw',
         )
         self.declare_parameter('confidence', 0.25)
+        self.declare_parameter('camera_horizontal_fov_deg', 69.4)
 
         requested_model_path = self.get_parameter('detection_model').value
         image_topic = self.get_parameter('image_topic').value
         depth_topic = self.get_parameter('depth_topic').value
         self.confidence = self.get_parameter('confidence').value
+        self.camera_horizontal_fov_deg = float(
+            self.get_parameter('camera_horizontal_fov_deg').value
+        )
         model_path = self.resolve_model_path(requested_model_path)
 
         self.get_logger().info(f'Loading YOLO model: {model_path}')
@@ -38,6 +45,11 @@ class YoloNode(Node):
         self.annotated_image_pub = self.create_publisher(
             Image,
             'yolo/annotated_image',
+            10,
+        )
+        self.person_target_pub = self.create_publisher(
+            String,
+            '/yolo/person_target',
             10,
         )
         self.image_sub = self.create_subscription(
@@ -141,6 +153,51 @@ class YoloNode(Node):
             return None
         return distance_meters
 
+    def build_person_target(self, frame, results, msg):
+        boxes = results[0].boxes
+        if boxes is None or len(boxes) == 0:
+            return {
+                'seen': False,
+                'stamp_sec': int(msg.header.stamp.sec),
+                'stamp_nanosec': int(msg.header.stamp.nanosec),
+            }
+
+        best_target = None
+        frame_width = frame.shape[1]
+        half_fov = self.camera_horizontal_fov_deg / 2.0
+
+        for box in boxes:
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            confidence = float(box.conf[0]) if box.conf is not None else 0.0
+            width = max(1.0, x2 - x1)
+            height = max(1.0, y2 - y1)
+            area = width * height
+            center_x = (x1 + x2) / 2.0
+            center_offset_norm = ((center_x / frame_width) * 2.0) - 1.0
+            angle_deg = center_offset_norm * half_fov
+            distance_meters = self.estimate_distance_meters(
+                box.xyxy[0].tolist(),
+                frame.shape,
+            )
+            score = area * max(confidence, 0.01)
+
+            candidate = {
+                'seen': True,
+                'stamp_sec': int(msg.header.stamp.sec),
+                'stamp_nanosec': int(msg.header.stamp.nanosec),
+                'confidence': confidence,
+                'center_offset_norm': center_offset_norm,
+                'angle_deg': angle_deg,
+                'distance_m': distance_meters,
+                'bbox_xyxy': [float(x1), float(y1), float(x2), float(y2)],
+                'score': score,
+            }
+            if best_target is None or candidate['score'] > best_target['score']:
+                best_target = candidate
+
+        best_target.pop('score', None)
+        return best_target
+
     def annotate_person_detections(self, frame, results):
         boxes = results[0].boxes
         if boxes is None:
@@ -199,6 +256,10 @@ class YoloNode(Node):
             f'Detected {detection_count} person(s)',
             throttle_duration_sec=1.0,
         )
+
+        target_msg = String()
+        target_msg.data = json.dumps(self.build_person_target(frame, results, msg))
+        self.person_target_pub.publish(target_msg)
 
         annotated_frame = frame.copy()
         annotated_frame = self.annotate_person_detections(annotated_frame, results)
