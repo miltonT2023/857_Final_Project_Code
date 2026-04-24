@@ -11,6 +11,7 @@ standalone `pygame` robot face demo.
 - A light controller node that maps robot states to LED colors
 - A SEIC directory lookup workflow backed by `data/seic_public_directory.xlsx`
 - A YOLO object-detection node using `yolov8n.pt` and aligned depth for distance estimates
+- A waiting greeter node that turns toward nearby people and stops once they are within `1 ft`
 - A simple web stream for the annotated YOLO output
 
 ## Run The Standalone Face Demo
@@ -31,6 +32,15 @@ ros2 launch milton_final_project face_yolo_launch.py
 ```
 
 This launch file starts the face display, YOLO pipeline, and light controller.
+
+## Waiting Greeter Behavior
+
+The waiting greeter node listens for YOLO person detections, rotates the robot
+toward the detected person, and now stops moving once that person is within
+`1 ft` of the robot.
+
+The stop threshold is controlled by the `stop_distance_ft` ROS parameter in
+`waiting_person_greeter_node.py`, and its default value is `1.0`.
 
 ## Run The Terminal Wayfinding Input Node
 
