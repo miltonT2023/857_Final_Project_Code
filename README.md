@@ -6,25 +6,33 @@ standalone `pygame` robot face demo.
 ## Main Features
 
 - A standalone animated robot face in `robot_face.py`
-- A ROS 2 face display node with a lighter UI, purple face glow, and camera preview
+- A ROS 2 face display node with a lighter UI, purple face glow, camera preview, and a border that turns green when a tracked person is currently seen
 - A terminal-based wayfinding input node plus a history logger for destination requests
 - A light controller node that maps robot states to LED colors
-- A SEIC directory lookup workflow backed by `data/seic_public_directory.xlsx`
+- A SEIC directory lookup workflow backed by `data/seic_public_directory.xlsx` plus custom person entries and alias matching
 - A YOLO object-detection node using `yolov8n.pt` and aligned depth for distance estimates
-- A waiting greeter node that turns toward nearby people and stops once they are within `1 ft`
+- State-aware YOLO and lidar tracking that automatically pauses while the robot is not in the `waiting` state
+- A waiting greeter node that turns toward nearby people and stops once they are within `6 in`
 - A simple web stream for the annotated YOLO output
 
 ## Run The Standalone Face Demo
 
 ```bash
-cd /home/nvidia/Milton_Final_Project
+cd /home/nvidia/857_Final_Project_Code
 python robot_face.py
+```
+
+## Install Python Requirements
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+python3 -m pip install -r requirements.txt
 ```
 
 ## Run The ROS 2 Face And YOLO System
 
 ```bash
-cd /home/nvidia/Milton_Final_Project
+cd /home/nvidia/857_Final_Project_Code
 source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
@@ -32,20 +40,24 @@ ros2 launch milton_final_project face_yolo_launch.py
 ```
 
 This launch file starts the face display, YOLO pipeline, and light controller.
+The face UI now subscribes to `/yolo/person_target` and draws a blue border while idle, then a green border when a person is actively detected.
 
 ## Waiting Greeter Behavior
 
 The waiting greeter node listens for YOLO person detections, rotates the robot
 toward the detected person, and now stops moving once that person is within
-`1 ft` of the robot.
+`6 in` of the robot.
 
 The stop threshold is controlled by the `stop_distance_ft` ROS parameter in
-`waiting_person_greeter_node.py`, and its default value is `1.0`.
+`waiting_person_greeter_node.py`, and its default value is `0.5`.
+The detection stability window was also reduced to `0.2 s` so the robot responds more quickly when a person enters view.
+
+When the robot leaves the `waiting` state, the greeter now clears stale motion and person targets and immediately publishes a zero-velocity command.
 
 ## Run The Terminal Wayfinding Input Node
 
 ```bash
-cd /home/nvidia/Milton_Final_Project
+cd /home/nvidia/857_Final_Project_Code
 source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
@@ -55,10 +67,10 @@ ros2 run milton_final_project wayfinding_input_node
 ## Run The Input History Logger Node
 
 This companion node records each typed destination and confirmation response to
-`/home/nvidia/Milton_Final_Project/runtime_logs/wayfinding_input_history.csv`.
+`/home/nvidia/857_Final_Project_Code/runtime_logs/wayfinding_input_history.csv`.
 
 ```bash
-cd /home/nvidia/Milton_Final_Project
+cd /home/nvidia/857_Final_Project_Code
 source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
@@ -71,7 +83,7 @@ This node listens for robot state updates such as `waiting`, `confirmation`,
 and `navigation`, then publishes matching LED colors.
 
 ```bash
-cd /home/nvidia/Milton_Final_Project
+cd /home/nvidia/857_Final_Project_Code
 source /opt/ros/humble/setup.bash
 colcon build
 source install/setup.bash
@@ -81,10 +93,11 @@ ros2 run milton_final_project light_controller_node
 ## Python Requirements
 
 The pip-based Python dependencies are listed in `requirements.txt`.
+Install them with `python3 -m pip install -r requirements.txt`.
 
 ROS-specific packages such as `rclpy`, `cv_bridge`, `sensor_msgs`, `std_msgs`,
-`launch`, and `launch_ros` are normally installed through ROS 2 rather than
-through `pip`.
+`geometry_msgs`, `launch`, and `launch_ros` are normally installed through ROS 2
+rather than through `pip`.
 
 ## Folder Organization
 

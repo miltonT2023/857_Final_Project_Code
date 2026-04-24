@@ -24,10 +24,12 @@ class YoloNode(Node):
         )
         self.declare_parameter('confidence', 0.25)
         self.declare_parameter('camera_horizontal_fov_deg', 69.4)
+        self.declare_parameter('state_topic', '/robot/light_state')
 
         requested_model_path = self.get_parameter('detection_model').value
         image_topic = self.get_parameter('image_topic').value
         depth_topic = self.get_parameter('depth_topic').value
+        state_topic = self.get_parameter('state_topic').value
         self.confidence = self.get_parameter('confidence').value
         self.camera_horizontal_fov_deg = float(
             self.get_parameter('camera_horizontal_fov_deg').value
@@ -42,6 +44,7 @@ class YoloNode(Node):
         self.bridge = CvBridge()
         self.latest_depth_frame = None
         self.latest_depth_encoding = None
+        self.current_state = 'waiting'
         self.annotated_image_pub = self.create_publisher(
             Image,
             'yolo/annotated_image',
@@ -64,8 +67,15 @@ class YoloNode(Node):
             self.depth_callback,
             qos_profile_sensor_data,
         )
+        self.state_sub = self.create_subscription(
+            String,
+            state_topic,
+            self.state_callback,
+            10,
+        )
         self.get_logger().info(f'Subscribed to camera topic: {image_topic}')
         self.get_logger().info(f'Subscribed to depth topic: {depth_topic}')
+        self.get_logger().info(f'Subscribed to state topic: {state_topic}')
 
     def find_person_class_id(self):
         for class_id, class_name in self.model.names.items():
@@ -114,6 +124,20 @@ class YoloNode(Node):
         if self.latest_depth_encoding == '32FC1':
             return float(depth_value)
         return float(depth_value) / 1000.0
+
+    def publish_no_target(self, reason: str):
+        target_msg = String()
+        target_msg.data = json.dumps({'seen': False, 'reason': reason})
+        self.person_target_pub.publish(target_msg)
+
+    def state_callback(self, msg: String):
+        next_state = msg.data.strip() or 'waiting'
+        if next_state == self.current_state:
+            return
+
+        self.current_state = next_state
+        if self.current_state != 'waiting':
+            self.publish_no_target('tracking_disabled')
 
     def estimate_distance_meters(self, xyxy, frame_shape):
         if self.latest_depth_frame is None:
@@ -242,6 +266,9 @@ class YoloNode(Node):
         return frame
 
     def image_callback(self, msg):
+        if self.current_state != 'waiting':
+            return
+
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         results = self.model(
             frame,

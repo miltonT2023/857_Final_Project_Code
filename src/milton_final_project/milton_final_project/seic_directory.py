@@ -188,7 +188,44 @@ class SeicDirectory:
                 )
             )
 
+        entries.extend(self._custom_entries())
         return entries
+
+    def _custom_entries(self) -> List[DirectoryEntry]:
+        return [
+            DirectoryEntry(
+                kind='person',
+                title='Michael Cabrera',
+                location='SEIC 404',
+                floor='4',
+                description='Office',
+                notes='Alias: Micheal Cabrera',
+            ),
+            DirectoryEntry(
+                kind='person',
+                title='Milton Tinoco',
+                location='SEIC 313',
+                floor='3',
+                description='Office',
+                notes='',
+            ),
+            DirectoryEntry(
+                kind='person',
+                title='Kevin Honag',
+                location='SEIC 313',
+                floor='3',
+                description='Office',
+                notes='',
+            ),
+            DirectoryEntry(
+                kind='person',
+                title='Ryan',
+                location='SEIC 313',
+                floor='3',
+                description='Office',
+                notes='',
+            ),
+        ]
 
     def _build_entry_aliases(self) -> Dict[DirectoryEntry, Set[str]]:
         aliases: Dict[DirectoryEntry, Set[str]] = {}
@@ -221,6 +258,13 @@ class SeicDirectory:
                         self._normalize_text(f'dr {last_name}'),
                     }
                 )
+                for alias in re.split(r'[;,]', entry.notes):
+                    alias = alias.strip()
+                    if alias.lower().startswith('alias:'):
+                        alias = alias.split(':', 1)[1].strip()
+                    normalized_alias = self._normalize_text(alias)
+                    if normalized_alias:
+                        entry_aliases.add(normalized_alias)
 
             if 'makerspace' in self._normalize_text(entry.title):
                 entry_aliases.add(self._normalize_text('makerspace'))

@@ -13,6 +13,7 @@ class LidarPersonTrackerNode(Node):
 
         self.declare_parameter('scan_topic', '/scan')
         self.declare_parameter('motion_topic', '/lidar/motion_target')
+        self.declare_parameter('state_topic', '/robot/light_state')
         self.declare_parameter('min_range_m', 0.25)
         self.declare_parameter('max_range_m', 5.0)
         self.declare_parameter('motion_delta_m', 0.18)
@@ -27,10 +28,12 @@ class LidarPersonTrackerNode(Node):
 
         scan_topic = self.get_parameter('scan_topic').value
         motion_topic = self.get_parameter('motion_topic').value
+        state_topic = self.get_parameter('state_topic').value
 
         self.previous_ranges = None
         self.previous_angle_min = None
         self.previous_angle_increment = None
+        self.current_state = 'waiting'
 
         self.scan_sub = self.create_subscription(
             LaserScan,
@@ -38,9 +41,16 @@ class LidarPersonTrackerNode(Node):
             self.scan_callback,
             10,
         )
+        self.state_sub = self.create_subscription(
+            String,
+            state_topic,
+            self.state_callback,
+            10,
+        )
         self.motion_pub = self.create_publisher(String, motion_topic, 10)
 
         self.get_logger().info(f'Subscribed to scan topic: {scan_topic}')
+        self.get_logger().info(f'Subscribed to state topic: {state_topic}')
         self.get_logger().info(f'Publishing motion cues to: {motion_topic}')
 
     def publish_motion(self, payload):
@@ -51,7 +61,22 @@ class LidarPersonTrackerNode(Node):
     def valid_range(self, value: float) -> bool:
         return math.isfinite(value) and self.min_range_m <= value <= self.max_range_m
 
+    def state_callback(self, msg: String):
+        next_state = msg.data.strip() or 'waiting'
+        if next_state == self.current_state:
+            return
+
+        self.current_state = next_state
+        if self.current_state != 'waiting':
+            self.previous_ranges = None
+            self.previous_angle_min = None
+            self.previous_angle_increment = None
+            self.publish_motion({'seen': False, 'reason': 'tracking_disabled'})
+
     def scan_callback(self, msg: LaserScan):
+        if self.current_state != 'waiting':
+            return
+
         current_ranges = list(msg.ranges)
         if self.previous_ranges is None:
             self.previous_ranges = current_ranges

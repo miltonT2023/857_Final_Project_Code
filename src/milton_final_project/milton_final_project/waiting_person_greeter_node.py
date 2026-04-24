@@ -22,9 +22,9 @@ class WaitingPersonGreeterNode(Node):
         self.declare_parameter('motion_timeout_sec', 0.8)
         self.declare_parameter('person_timeout_sec', 0.8)
         self.declare_parameter('idle_search_delay_sec', 90.0)
-        self.declare_parameter('stable_detection_sec', 0.8)
+        self.declare_parameter('stable_detection_sec', 0.2)
         self.declare_parameter('align_tolerance_deg', 6.0)
-        self.declare_parameter('stop_distance_ft', 1.0)
+        self.declare_parameter('stop_distance_ft', 0.5)
         self.declare_parameter('angular_gain', 1.4)
         self.declare_parameter('max_angular_speed', 0.8)
         self.declare_parameter('min_angular_speed', 0.18)
@@ -124,9 +124,11 @@ class WaitingPersonGreeterNode(Node):
         self.current_state = msg.data.strip() or 'waiting'
         if self.current_state != 'waiting':
             self.person_seen_since = None
+            self.latest_motion_target = None
+            self.latest_motion_time = None
+            self.latest_person_target = None
+            self.latest_person_time = None
             self.stop_robot()
-        else:
-            self.last_user_input_time = self.get_clock().now()
 
     def user_input_callback(self, msg: String):
         if msg.data.strip():
@@ -171,6 +173,14 @@ class WaitingPersonGreeterNode(Node):
         elapsed = (self.get_clock().now() - self.last_greet_time).nanoseconds / 1e9
         return elapsed >= self.greeting_cooldown_sec
 
+    def stop_robot(self):
+        if not self.last_cmd_was_nonzero:
+            return
+
+        twist = Twist()
+        self.cmd_vel_pub.publish(twist)
+        self.last_cmd_was_nonzero = False
+
     def idle_search_ready(self) -> bool:
         if self.current_state != 'waiting':
             return False
@@ -180,20 +190,18 @@ class WaitingPersonGreeterNode(Node):
         ).nanoseconds / 1e9
         return idle_sec >= self.idle_search_delay_sec
 
-    def stop_robot(self):
-        if not self.last_cmd_was_nonzero:
-            return
-
+    def publish_command(self, linear_x: float = 0.0, angular_z: float = 0.0):
         twist = Twist()
+        twist.linear.x = linear_x
+        twist.angular.z = angular_z
         self.cmd_vel_pub.publish(twist)
-        self.last_cmd_was_nonzero = False
+        self.last_cmd_was_nonzero = (
+            abs(linear_x) > 1e-6 or abs(angular_z) > 1e-6
+        )
 
     def publish_turn(self, angular_z: float):
-        twist = Twist()
         # Camera image x-offset and base rotation use opposite sign conventions.
-        twist.angular.z = -angular_z
-        self.cmd_vel_pub.publish(twist)
-        self.last_cmd_was_nonzero = abs(angular_z) > 1e-6
+        self.publish_command(angular_z=-angular_z)
 
     def publish_greeting(self):
         expression = String()
@@ -229,6 +237,7 @@ class WaitingPersonGreeterNode(Node):
 
     def control_loop(self):
         if self.current_state != 'waiting':
+            self.stop_robot()
             return
 
         if not self.idle_search_ready():

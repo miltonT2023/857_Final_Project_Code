@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 import math
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -36,6 +37,7 @@ class FaceDisplayNode(Node):
         self.declare_parameter('fullscreen', True)
         self.declare_parameter('show_help', False)
         self.declare_parameter('preview_topic', '/yolo/annotated_image')
+        self.declare_parameter('person_target_topic', '/yolo/person_target')
         self.declare_parameter('initial_expression', 'neutral')
         self.declare_parameter(
             'waiting_message',
@@ -57,6 +59,7 @@ class FaceDisplayNode(Node):
             self.get_parameter('navigation_timeout_sec').value
         )
         self.preview_topic = self.get_parameter('preview_topic').value
+        self.person_target_topic = self.get_parameter('person_target_topic').value
         self.expression_index = 0
 
         pygame.init()
@@ -75,6 +78,9 @@ class FaceDisplayNode(Node):
         self.navigation_bg = (104, 193, 143)
         self.navigation_bg_dark = (66, 144, 104)
         self.navigation_text = (244, 255, 247)
+        self.detected_border_color = (52, 199, 89)
+        self.idle_border_color = (44, 132, 255)
+        self.border_thickness = 22
 
         self.cx = self.width // 2
         self.bottom_panel_height = 210
@@ -124,6 +130,7 @@ class FaceDisplayNode(Node):
         self.bridge = CvBridge()
         self.preview_surface = None
         self.preview_size = (320, 180)
+        self.person_detected = False
         self.face_glow_color = (196, 168, 255, 92)
         self.face_halo_color = (156, 126, 235, 78)
 
@@ -154,6 +161,12 @@ class FaceDisplayNode(Node):
             self.preview_callback,
             10,
         )
+        self.person_target_sub = self.create_subscription(
+            String,
+            self.person_target_topic,
+            self.person_target_callback,
+            10,
+        )
         self.light_state_pub = self.create_publisher(String, '/robot/light_state', 10)
         self.last_light_state = None
 
@@ -161,6 +174,9 @@ class FaceDisplayNode(Node):
         self.publish_light_state()
         self.get_logger().info(f'Face monitor ready with assets from: {self.assets_dir}')
         self.get_logger().info(f'Face preview subscribed to: {self.preview_topic}')
+        self.get_logger().info(
+            f'Face border subscribed to person target topic: {self.person_target_topic}'
+        )
 
     def load_image(self, relative_path: str) -> pygame.Surface:
         path = self.assets_dir / relative_path
@@ -263,15 +279,33 @@ class FaceDisplayNode(Node):
             self.set_override(message=message)
 
     def preview_callback(self, msg: Image):
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        rgb_frame = frame[:, :, ::-1]
-        rgb_frame = np.ascontiguousarray(rgb_frame)
-        surface = pygame.image.frombuffer(
-            rgb_frame.tobytes(),
-            (rgb_frame.shape[1], rgb_frame.shape[0]),
-            'RGB',
-        )
-        self.preview_surface = surface.copy()
+        try:
+            frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            rgb_frame = frame[:, :, ::-1]
+            rgb_frame = np.ascontiguousarray(rgb_frame)
+            self.preview_surface = pygame.image.fromstring(
+                rgb_frame.tobytes(),
+                (rgb_frame.shape[1], rgb_frame.shape[0]),
+                'RGB',
+            )
+        except Exception as exc:
+            self.get_logger().warning(
+                f'Preview frame conversion failed: {exc!r}',
+                throttle_duration_sec=2.0,
+            )
+
+    def person_target_callback(self, msg: String):
+        try:
+            payload = json.loads(msg.data)
+        except json.JSONDecodeError as exc:
+            self.get_logger().warning(
+                f'Person target decode failed: {exc!r}',
+                throttle_duration_sec=2.0,
+            )
+            self.person_detected = False
+            return
+
+        self.person_detected = bool(payload.get('seen', False))
 
     def current_gaze_offset(self):
         if self.override_expression == 'happy':
@@ -466,9 +500,22 @@ class FaceDisplayNode(Node):
         label_rect = label_surface.get_rect(topright=(frame_rect.right - 10, frame_rect.bottom + 6))
         self.screen.blit(label_surface, label_rect)
 
+    def draw_detection_border(self):
+        border_color = (
+            self.detected_border_color if self.person_detected else self.idle_border_color
+        )
+        pygame.draw.rect(
+            self.screen,
+            border_color,
+            self.screen.get_rect(),
+            width=self.border_thickness,
+            border_radius=18,
+        )
+
     def draw(self):
         if self.navigation_mode_active:
             self.draw_navigation_mode()
+            self.draw_detection_border()
             pygame.display.flip()
             return
 
@@ -480,6 +527,7 @@ class FaceDisplayNode(Node):
         self.draw_message()
         self.draw_input_box()
         self.draw_status()
+        self.draw_detection_border()
         pygame.display.flip()
 
     def draw_navigation_mode(self):
