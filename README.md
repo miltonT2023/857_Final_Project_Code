@@ -90,6 +90,99 @@ source install/setup.bash
 ros2 run milton_final_project light_controller_node
 ```
 
+## Run Controller QBot Mapping
+
+This launch file starts the QBot platform driver, QBot lidar, QBot lidar TF,
+Cartographer mapping, and QBot's built-in controller command node. Use the QBot
+controller to drive while Cartographer builds the map.
+
+Saved maps are written to `/home/nvidia/857_Final_Project_Code/maps` as paired
+`.yaml` and image files with names like `mapped_area_20260505_153000.yaml`.
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+source /opt/ros/humble/setup.bash
+source /home/nvidia/ros2/install/setup.bash
+colcon build
+source install/setup.bash
+ros2 launch milton_final_project slam_keyboard_mapping_launch.py
+```
+
+When you are ready to save the map, keep the mapping launch running and use a
+second terminal:
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+source /opt/ros/humble/setup.bash
+source /home/nvidia/ros2/install/setup.bash
+source install/setup.bash
+ros2 run milton_final_project save_latest_map
+```
+
+After it prints `Map save complete`, you can stop the mapping launch with
+`Ctrl+C`.
+
+## View A Saved Map In 3D Over SSH
+
+This starts a small web server on the QBot and streams a browser-based 3D map
+viewer. It automatically opens the newest map in
+`/home/nvidia/857_Final_Project_Code/maps`.
+
+On the QBot:
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+source /opt/ros/humble/setup.bash
+source /home/nvidia/ros2/install/setup.bash
+source install/setup.bash
+ros2 run milton_final_project map_3d_viewer
+```
+
+From your laptop, open an SSH tunnel:
+
+```bash
+ssh -L 8090:localhost:8090 nvidia@<qbot-ip>
+```
+
+Then open this in your laptop browser:
+
+```text
+http://localhost:8090
+```
+
+Labels are saved per map. For a map named
+`mapped_area_20260505_153000.yaml`, labels are saved beside it as
+`mapped_area_20260505_153000.labels.yaml`.
+
+## Navigate To A Saved Map Label
+
+First start the QBot driver, localization, map server, and Nav2 navigation
+stack. By default, this launch uses the newest saved map in
+`/home/nvidia/857_Final_Project_Code/maps`.
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+source /opt/ros/humble/setup.bash
+source /home/nvidia/ros2/install/setup.bash
+colcon build --packages-select milton_final_project
+source install/setup.bash
+ros2 launch milton_final_project qbot_navigation_launch.py
+```
+
+In a second terminal, send the robot to a label from the newest map's matching
+`.labels.yaml` file:
+
+```bash
+cd /home/nvidia/857_Final_Project_Code
+source /opt/ros/humble/setup.bash
+source /home/nvidia/ros2/install/setup.bash
+source install/setup.bash
+ros2 run milton_final_project navigate_to_label overthere
+```
+
+Use the 3D map viewer to add more labels, then replace `overthere` with the
+label name.
+
 ## Python Requirements
 
 The pip-based Python dependencies are listed in `requirements.txt`.

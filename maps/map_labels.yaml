@@ -1,0 +1,10 @@
+# Named navigation targets for saved QBot maps.
+locations:
+  here:
+    x: -0.715239
+    y: -1.330902
+    yaw: 0.000000
+  overthere:
+    x: 0.084761
+    y: -1.330902
+    yaw: 0.000000

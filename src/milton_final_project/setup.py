@@ -14,6 +14,7 @@ data_files = [
         ['resource/' + package_name]),
     ('share/' + package_name, ['package.xml']),
     (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+    (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
 ]
 
 for root, _, files in os.walk(assets_root):
@@ -70,6 +71,13 @@ setup(
             'waiting_person_greeter_node = milton_final_project.waiting_person_greeter_node:main',
             'yolo_web_stream = milton_final_project.yolo_web_stream:main',
             'light_controller_node = milton_final_project.light_controller_node:main',
+            'slam_keyboard_mapper_node = milton_final_project.slam_keyboard_mapper_node:main',
+            'map_3d_viewer = milton_final_project.map_3d_viewer:main',
+            'navigate_to_label = milton_final_project.navigate_to_label:main',
+            'save_latest_map = milton_final_project.save_latest_map:main',
+            'initial_pose_publisher = milton_final_project.initial_pose_publisher:main',
+            'qbot_odometry_node = milton_final_project.qbot_odometry_node:main',
+            'q_shutdown_node = milton_final_project.q_shutdown_node:main',
         ],
     },
 )
