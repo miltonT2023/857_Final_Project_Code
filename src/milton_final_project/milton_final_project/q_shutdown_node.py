@@ -1,8 +1,6 @@
 import select
 import sys
-import termios
 import threading
-import tty
 
 import rclpy
 from rclpy.executors import ExternalShutdownException
@@ -28,7 +26,10 @@ class QShutdownNode(Node):
             daemon=True,
         )
         self.keyboard_thread.start()
-        self.get_logger().info('Press q in this terminal to stop navigation launch.')
+        self.get_logger().info(
+            'Type q and press Enter in this terminal to stop '
+            'navigation launch.'
+        )
 
     def shutdown_callback(self, _msg):
         self.get_logger().info('Shutdown request received.')
@@ -38,20 +39,18 @@ class QShutdownNode(Node):
         if not sys.stdin.isatty():
             return
 
-        old_settings = termios.tcgetattr(sys.stdin)
-        try:
-            tty.setcbreak(sys.stdin.fileno())
-            while rclpy.ok() and not self.shutdown_requested.is_set():
-                readable, _, _ = select.select([sys.stdin], [], [], 0.1)
-                if not readable:
-                    continue
-                char = sys.stdin.read(1).lower()
-                if char == 'q':
-                    self.get_logger().info('q pressed. Shutting down navigation launch.')
-                    self.shutdown_requested.set()
-                    return
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        while rclpy.ok() and not self.shutdown_requested.is_set():
+            readable, _, _ = select.select([sys.stdin], [], [], 0.1)
+            if not readable:
+                continue
+
+            command = sys.stdin.readline().strip().lower()
+            if command == 'q':
+                self.get_logger().info(
+                    'q pressed. Shutting down navigation launch.'
+                )
+                self.shutdown_requested.set()
+                return
 
 
 def main(args=None):

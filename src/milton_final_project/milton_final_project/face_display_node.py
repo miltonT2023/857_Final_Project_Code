@@ -1,8 +1,11 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import math
 from pathlib import Path
+import queue
 from concurrent.futures import ThreadPoolExecutor
+import threading
 import textwrap
 
 from ament_index_python.packages import get_package_share_directory
@@ -41,11 +44,24 @@ class FaceDisplayNode(Node):
         self.declare_parameter('initial_expression', 'neutral')
         self.declare_parameter(
             'waiting_message',
-            "Hi, I'm the navigation robot that helps you find a location or room.",
+            'I am the SEIC navigation robot. Please enter the person or room you are trying to find.',
         )
         self.declare_parameter('response_duration_sec', 10.0)
-        self.declare_parameter('confirmation_timeout_sec', 15.0)
-        self.declare_parameter('navigation_timeout_sec', 20.0)
+        self.declare_parameter('confirmation_timeout_sec', 60.0)
+        self.declare_parameter('navigation_timeout_sec', 0.0)
+        default_phrase_log = (
+            Path.home()
+            / 'Milton_Final_Project'
+            / 'runtime_logs'
+            / 'face_gui_phrases.txt'
+        )
+        self.declare_parameter('phrase_log_file', str(default_phrase_log))
+        self.declare_parameter('speak_phrases', True)
+        self.declare_parameter('speech_rate', 125)
+        self.declare_parameter('speech_volume', 0.65)
+        self.declare_parameter('speech_voice_id', 'gmw/en-us')
+        self.declare_parameter('speech_chars_per_sec', 13.0)
+        self.declare_parameter('frame_rate', 20.0)
         self.width = int(self.get_parameter('width').value)
         self.height = int(self.get_parameter('height').value)
         self.show_help = bool(self.get_parameter('show_help').value)
@@ -60,6 +76,18 @@ class FaceDisplayNode(Node):
         )
         self.preview_topic = self.get_parameter('preview_topic').value
         self.person_target_topic = self.get_parameter('person_target_topic').value
+        self.phrase_log_file = Path(
+            self.get_parameter('phrase_log_file').value
+        ).expanduser()
+        self.phrase_log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.speak_phrases = bool(self.get_parameter('speak_phrases').value)
+        self.speech_rate = int(self.get_parameter('speech_rate').value)
+        self.speech_volume = float(self.get_parameter('speech_volume').value)
+        self.speech_voice_id = self.get_parameter('speech_voice_id').value
+        self.speech_chars_per_sec = float(
+            self.get_parameter('speech_chars_per_sec').value
+        )
+        self.frame_rate = float(self.get_parameter('frame_rate').value)
         self.expression_index = 0
 
         pygame.init()
@@ -125,6 +153,13 @@ class FaceDisplayNode(Node):
         self.navigation_mode_active = False
         self.state_timeout_at = None
         self.assistant_pool = ThreadPoolExecutor(max_workers=1)
+        self.speech_queue = queue.Queue()
+        self.speech_stop = threading.Event()
+        self.speech_thread = None
+        self.speech_display_text = ''
+        self.speech_display_started_at = None
+        self.speech_display_until = None
+        self.last_spoken_message = None
         self.interpreter = RobotInterpreter()
         self.directory = SeicDirectory()
         self.bridge = CvBridge()
@@ -170,13 +205,24 @@ class FaceDisplayNode(Node):
         self.light_state_pub = self.create_publisher(String, '/robot/light_state', 10)
         self.last_light_state = None
 
-        self.timer = self.create_timer(1.0 / 30.0, self.update_frame)
+        if self.speak_phrases:
+            self.speech_thread = threading.Thread(
+                target=self.speech_loop,
+                daemon=True,
+            )
+            self.speech_thread.start()
+            self.speak_robot_message(self.current_message, save=True)
+
+        self.timer = self.create_timer(1.0 / max(5.0, self.frame_rate), self.update_frame)
         self.publish_light_state()
         self.get_logger().info(f'Face monitor ready with assets from: {self.assets_dir}')
         self.get_logger().info(f'Face preview subscribed to: {self.preview_topic}')
         self.get_logger().info(
             f'Face border subscribed to person target topic: {self.person_target_topic}'
         )
+        self.get_logger().info(f'Face GUI phrases will be saved to: {self.phrase_log_file}')
+        if self.speak_phrases:
+            self.get_logger().info('Face GUI text-to-speech is enabled.')
 
     def load_image(self, relative_path: str) -> pygame.Surface:
         path = self.assets_dir / relative_path
@@ -232,7 +278,7 @@ class FaceDisplayNode(Node):
 
         if message is not None:
             self.override_message = message
-            self.current_message = message
+            self.show_robot_message(message)
 
         self.override_until = (
             self.get_clock().now().nanoseconds / 1e9 + self.response_duration_sec
@@ -444,11 +490,11 @@ class FaceDisplayNode(Node):
         self.screen.blit(box_surface, box_rect)
 
         if self.awaiting_confirmation:
-            placeholder = 'Type yes or no...'
+            placeholder = 'Type yes or no'
         elif self.navigation_mode_active:
-            placeholder = 'Press Enter to start over...'
+            placeholder = 'Press Enter to ask for another person or room'
         else:
-            placeholder = 'Room or location...'
+            placeholder = 'Person or room to find'
 
         display_text = self.input_buffer if self.input_buffer else placeholder
         text_color = self.message_text if self.input_buffer else (136, 154, 165)
@@ -543,7 +589,7 @@ class FaceDisplayNode(Node):
 
         headline = self.navigation_font.render("Let's go", True, self.navigation_text)
         subline = self.message_font.render(
-            'Going to navigation mode.',
+            'Starting navigation.',
             True,
             self.navigation_text,
         )
@@ -597,11 +643,106 @@ class FaceDisplayNode(Node):
             return
 
         if self.pending_future is not None and not self.pending_future.done():
-            self.set_override(expression='confused', message='I am still processing the last request.')
+            self.set_override(
+                expression='confused',
+                message='One moment, I am still checking the last request.',
+            )
             return
 
-        self.set_override(expression='confused', message=f'Looking up {destination} in the SEIC directory.')
+        self.set_override(
+            expression='confused',
+            message=f'I am looking up {destination} in the SEIC directory.',
+        )
         self.pending_future = self.assistant_pool.submit(self.lookup_destination, destination)
+
+    def show_robot_message(self, message: str):
+        self.current_message = message
+        self.speak_robot_message(message, save=True)
+
+    def save_robot_message(self, message: str):
+        if not message:
+            return
+
+        timestamp = datetime.now(timezone.utc).isoformat()
+        with self.phrase_log_file.open('a', encoding='utf-8') as log_handle:
+            log_handle.write(f'{timestamp} {message}\n')
+
+        self.get_logger().info(f'Saved robot GUI message: {message}')
+
+    def speak_robot_message(self, message: str, save=False):
+        if not message:
+            return
+
+        if save:
+            self.save_robot_message(message)
+
+        if not self.speak_phrases or message == self.last_spoken_message:
+            return
+
+        self.last_spoken_message = message
+        now = self.now_seconds()
+        speech_duration = max(
+            1.5,
+            len(message) / max(5.0, self.speech_chars_per_sec),
+        )
+        self.speech_display_text = message
+        self.speech_display_started_at = now
+        self.speech_display_until = now + speech_duration + 0.8
+        self.set_expression('happy')
+        self.speech_queue.put(message)
+
+    def speech_loop(self):
+        try:
+            import pyttsx3
+
+            engine = pyttsx3.init()
+            self.configure_speech_engine(engine)
+
+            while not self.speech_stop.is_set():
+                phrase = self.speech_queue.get()
+                if phrase is None:
+                    return
+                engine.say(phrase)
+                engine.runAndWait()
+        except Exception as exc:
+            self.get_logger().warning(f'Could not speak phrase: {exc}')
+
+    def configure_speech_engine(self, engine):
+        engine.setProperty('rate', self.speech_rate)
+        engine.setProperty('volume', max(0.0, min(1.0, self.speech_volume)))
+
+        if not self.speech_voice_id:
+            return
+
+        wanted = self.speech_voice_id.lower()
+        for voice in engine.getProperty('voices'):
+            voice_id = getattr(voice, 'id', '')
+            voice_name = getattr(voice, 'name', '')
+            if wanted in voice_id.lower() or wanted in voice_name.lower():
+                engine.setProperty('voice', voice_id)
+                self.get_logger().info(f'Using TTS voice: {voice_id}')
+                return
+
+        self.get_logger().warning(
+            f'TTS voice "{self.speech_voice_id}" was not found. Using default voice.'
+        )
+
+    def update_speech_display(self):
+        if not self.speech_display_text or self.speech_display_started_at is None:
+            return
+
+        now = self.now_seconds()
+        elapsed = max(0.0, now - self.speech_display_started_at)
+        visible_count = min(
+            len(self.speech_display_text),
+            int(elapsed * max(5.0, self.speech_chars_per_sec)) + 1,
+        )
+        self.current_message = self.speech_display_text[:visible_count]
+
+        if self.speech_display_until is not None and now >= self.speech_display_until:
+            self.speech_display_text = ''
+            self.speech_display_started_at = None
+            self.speech_display_until = None
 
     def lookup_destination(self, destination: str):
         target = self.interpreter.extract_target(destination)
@@ -618,7 +759,7 @@ class FaceDisplayNode(Node):
 
         destination_label = match.entry.location if match.entry.kind == 'person' else match.entry.title
         message = (
-            f'{base_message} Do you need help getting to {destination_label}? '
+            f'{base_message} Would you like me to guide you to {destination_label}? '
             'Please type yes or no.'
         )
         return {
@@ -634,6 +775,9 @@ class FaceDisplayNode(Node):
         no_tokens = {'no', 'n', 'nope', 'nah'}
 
         if normalized in yes_tokens:
+            self.get_logger().info(
+                f'Navigation mode accepted for: {self.pending_destination_label or "destination"}'
+            )
             self.navigation_mode_active = True
             self.awaiting_confirmation = False
             self.override_expression = None
@@ -641,15 +785,15 @@ class FaceDisplayNode(Node):
             self.override_until = None
             self.active_expression = 'happy'
             self.set_expression('happy')
-            self.current_message = 'Going to navigation mode.'
-            self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
+            self.show_robot_message('Starting navigation.')
+            self.state_timeout_at = None
             self.publish_light_state()
             return
 
         if normalized in no_tokens:
             self.set_override(
                 expression='neutral',
-                message='Okay. If you need anything else, ask me about another room or person.',
+                message='Okay. You can enter another person or room when you are ready.',
             )
             self.awaiting_confirmation = False
             self.pending_destination_label = None
@@ -660,7 +804,7 @@ class FaceDisplayNode(Node):
         destination_label = self.pending_destination_label or 'that location'
         self.set_override(
             expression='confused',
-            message=f'Please answer yes or no. Do you need help getting to {destination_label}?',
+            message=f'Please type yes or no. Would you like me to guide you to {destination_label}?',
         )
         self.awaiting_confirmation = True
         self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
@@ -678,7 +822,7 @@ class FaceDisplayNode(Node):
             self.show_help = not self.show_help
 
     def update_frame(self):
-        self.clock.tick(30)
+        self.clock.tick(max(5.0, self.frame_rate))
 
         if self.pending_future is not None and self.pending_future.done():
             try:
@@ -706,8 +850,14 @@ class FaceDisplayNode(Node):
             if not self.awaiting_confirmation and not self.navigation_mode_active:
                 self.clear_override()
 
-        if self.state_timeout_at is not None and self.now_seconds() >= self.state_timeout_at:
+        if (
+            self.state_timeout_at is not None
+            and self.now_seconds() >= self.state_timeout_at
+            and not self.navigation_mode_active
+        ):
             self.clear_override()
+
+        self.update_speech_display()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -736,6 +886,10 @@ class FaceDisplayNode(Node):
 
     def destroy_node(self):
         self.assistant_pool.shutdown(wait=False)
+        self.speech_stop.set()
+        if self.speech_thread is not None:
+            self.speech_queue.put(None)
+            self.speech_thread.join(timeout=1.0)
         pygame.quit()
         super().destroy_node()
 
