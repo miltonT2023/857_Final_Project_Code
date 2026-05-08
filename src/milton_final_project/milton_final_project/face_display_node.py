@@ -46,8 +46,9 @@ class FaceDisplayNode(Node):
         self.declare_parameter('response_duration_sec', 10.0)
         self.declare_parameter('confirmation_timeout_sec', 15.0)
         self.declare_parameter('navigation_timeout_sec', 20.0)
-        self.width = int(self.get_parameter('width').value)
-        self.height = int(self.get_parameter('height').value)
+        requested_width = int(self.get_parameter('width').value)
+        requested_height = int(self.get_parameter('height').value)
+        self.fullscreen = bool(self.get_parameter('fullscreen').value)
         self.show_help = bool(self.get_parameter('show_help').value)
         self.response_duration_sec = float(
             self.get_parameter('response_duration_sec').value
@@ -65,7 +66,15 @@ class FaceDisplayNode(Node):
         pygame.init()
         pygame.font.init()
 
-        display_flags = pygame.FULLSCREEN if self.get_parameter('fullscreen').value else 0
+        display_info = pygame.display.Info()
+        if self.fullscreen:
+            self.width = display_info.current_w
+            self.height = display_info.current_h
+        else:
+            self.width = requested_width
+            self.height = requested_height
+
+        display_flags = pygame.FULLSCREEN if self.fullscreen else 0
         self.screen = pygame.display.set_mode((self.width, self.height), display_flags)
         self.clock = pygame.time.Clock()
 
@@ -80,12 +89,16 @@ class FaceDisplayNode(Node):
         self.navigation_text = (244, 255, 247)
         self.detected_border_color = (52, 199, 89)
         self.idle_border_color = (44, 132, 255)
-        self.border_thickness = 22
+        self.ui_scale = min(self.width / 1024.0, self.height / 600.0)
+        self.border_thickness = max(14, int(22 * self.ui_scale))
 
         self.cx = self.width // 2
-        self.bottom_panel_height = 210
-        self.cy = (self.height - self.bottom_panel_height) // 2 - 40
-        self.face_size = min(self.width, self.height - self.bottom_panel_height) - 40
+        self.bottom_panel_height = min(210, max(130, int(self.height * 0.30)))
+        self.cy = max(0, (self.height - self.bottom_panel_height) // 2)
+        self.face_size = min(
+            int(self.width * 0.70),
+            int((self.height - self.bottom_panel_height) * 0.85),
+        )
 
         share_dir = Path(get_package_share_directory('milton_final_project'))
         self.assets_dir = share_dir / 'assets' / 'kaia_face'
@@ -129,18 +142,21 @@ class FaceDisplayNode(Node):
         self.directory = SeicDirectory()
         self.bridge = CvBridge()
         self.preview_surface = None
-        self.preview_size = (320, 180)
+        self.preview_size = (
+            max(220, int(320 * self.ui_scale)),
+            max(124, int(180 * self.ui_scale)),
+        )
         self.person_detected = False
         self.face_glow_color = (196, 168, 255, 92)
         self.face_halo_color = (156, 126, 235, 78)
 
         self.set_expression(self.active_expression)
 
-        self.font = pygame.font.SysFont('arial', 28, bold=True)
-        self.small_font = pygame.font.SysFont('arial', 18)
-        self.message_font = pygame.font.SysFont('arial', 30, bold=True)
-        self.navigation_font = pygame.font.SysFont('arial', 58, bold=True)
-        self.input_font = pygame.font.SysFont('arial', 26)
+        self.font = pygame.font.SysFont('arial', max(18, int(28 * self.ui_scale)), bold=True)
+        self.small_font = pygame.font.SysFont('arial', max(12, int(18 * self.ui_scale)))
+        self.message_font = pygame.font.SysFont('arial', max(18, int(30 * self.ui_scale)), bold=True)
+        self.navigation_font = pygame.font.SysFont('arial', max(30, int(58 * self.ui_scale)), bold=True)
+        self.input_font = pygame.font.SysFont('arial', max(16, int(26 * self.ui_scale)))
         self.help_lines = []
 
         self.expression_sub = self.create_subscription(
@@ -168,6 +184,8 @@ class FaceDisplayNode(Node):
             10,
         )
         self.light_state_pub = self.create_publisher(String, '/robot/light_state', 10)
+        self.user_input_pub = self.create_publisher(String, '/wayfinding/user_input', 10)
+        self.label_pub = self.create_publisher(String, '/label', 10)
         self.last_light_state = None
 
         self.timer = self.create_timer(1.0 / 30.0, self.update_frame)
@@ -267,6 +285,19 @@ class FaceDisplayNode(Node):
         msg.data = state
         self.light_state_pub.publish(msg)
         self.last_light_state = state
+
+    def publish_user_input(self, prompt_type: str, text: str):
+        msg = String()
+        msg.data = f'{prompt_type}|{text}'
+        self.user_input_pub.publish(msg)
+
+    def publish_destination_label(self):
+        if not self.pending_destination_label:
+            return
+
+        msg = String()
+        msg.data = self.pending_destination_label
+        self.label_pub.publish(msg)
 
     def expression_callback(self, msg: String):
         expression = msg.data.strip()
@@ -579,6 +610,9 @@ class FaceDisplayNode(Node):
             self.clear_override()
             return
 
+        prompt_type = 'confirmation' if self.awaiting_confirmation else 'destination'
+        self.publish_user_input(prompt_type, destination)
+
         if self.navigation_mode_active:
             self.clear_override()
             return
@@ -634,6 +668,7 @@ class FaceDisplayNode(Node):
         no_tokens = {'no', 'n', 'nope', 'nah'}
 
         if normalized in yes_tokens:
+            self.publish_destination_label()
             self.navigation_mode_active = True
             self.awaiting_confirmation = False
             self.override_expression = None
