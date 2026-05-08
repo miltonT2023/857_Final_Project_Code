@@ -24,11 +24,13 @@ class QBotOdometryNode(Node):
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('base_frame', 'base_link')
         self.declare_parameter('publish_rate_hz', 30.0)
+        self.declare_parameter('publish_tf', True)
 
         self.speed_topic = self.get_parameter('speed_topic').value
         self.odom_topic = self.get_parameter('odom_topic').value
         self.odom_frame = self.get_parameter('odom_frame').value
         self.base_frame = self.get_parameter('base_frame').value
+        self.publish_tf = bool(self.get_parameter('publish_tf').value)
 
         self.x = 0.0
         self.y = 0.0
@@ -39,7 +41,7 @@ class QBotOdometryNode(Node):
         self.lock = threading.Lock()
 
         self.odom_publisher = self.create_publisher(Odometry, self.odom_topic, 10)
-        self.tf_broadcaster = TransformBroadcaster(self)
+        self.tf_broadcaster = TransformBroadcaster(self) if self.publish_tf else None
         self.create_subscription(
             TwistStamped,
             self.speed_topic,
@@ -77,19 +79,21 @@ class QBotOdometryNode(Node):
             self.last_stamp = stamp
 
     def publish_odometry(self):
-        now = self.get_clock().now().to_msg()
-
         with self.lock:
+            if self.last_stamp is None:
+                return
+
             x = self.x
             y = self.y
             yaw = self.yaw
             linear_velocity = self.linear_velocity
             angular_velocity = self.angular_velocity
+            stamp = self.last_stamp.to_msg()
 
         qx, qy, qz, qw = quaternion_from_yaw(yaw)
 
         transform = TransformStamped()
-        transform.header.stamp = now
+        transform.header.stamp = stamp
         transform.header.frame_id = self.odom_frame
         transform.child_frame_id = self.base_frame
         transform.transform.translation.x = x
@@ -99,10 +103,11 @@ class QBotOdometryNode(Node):
         transform.transform.rotation.y = qy
         transform.transform.rotation.z = qz
         transform.transform.rotation.w = qw
-        self.tf_broadcaster.sendTransform(transform)
+        if self.tf_broadcaster is not None:
+            self.tf_broadcaster.sendTransform(transform)
 
         odom = Odometry()
-        odom.header.stamp = now
+        odom.header.stamp = stamp
         odom.header.frame_id = self.odom_frame
         odom.child_frame_id = self.base_frame
         odom.pose.pose.position.x = x
@@ -112,8 +117,13 @@ class QBotOdometryNode(Node):
         odom.pose.pose.orientation.y = qy
         odom.pose.pose.orientation.z = qz
         odom.pose.pose.orientation.w = qw
+        odom.pose.covariance[0] = 0.05
+        odom.pose.covariance[7] = 0.05
+        odom.pose.covariance[35] = 0.08
         odom.twist.twist.linear.x = linear_velocity
         odom.twist.twist.angular.z = angular_velocity
+        odom.twist.covariance[0] = 0.03
+        odom.twist.covariance[35] = 0.04
         self.odom_publisher.publish(odom)
 
 

@@ -68,7 +68,12 @@ class SeicDirectory:
 
         ranked = self._rank_candidates(cleaned_query)
         if not ranked:
-            return DirectoryMatch(query=cleaned_query, entry=None, score=0.0, reason='no_candidates')
+            return DirectoryMatch(
+                query=cleaned_query,
+                entry=None,
+                score=0.0,
+                reason='no_candidates',
+            )
 
         best_score, best_entry = ranked[0]
         alternatives = tuple(entry.title for _, entry in ranked[1:4])

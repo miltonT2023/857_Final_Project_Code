@@ -111,7 +111,6 @@ class FriendlyRobotAssistant:
 
     def _infer_expression(self, user_text: str, reply_text: str) -> str:
         lowered_input = user_text.lower()
-        lowered_reply = reply_text.lower()
 
         if any(token in lowered_input for token in ('thank', 'thanks')):
             return 'thank_you'

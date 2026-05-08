@@ -90,6 +90,14 @@ VIEWER_HTML = """<!doctype html>
       background: #163f36;
       color: #dffcf4;
     }
+    button.danger {
+      border-color: #7f3b45;
+      background: #3b1f26;
+      color: #ffd8dd;
+    }
+    button.danger:hover {
+      background: #512731;
+    }
     .label-panel {
       position: fixed;
       left: 14px;
@@ -107,6 +115,20 @@ VIEWER_HTML = """<!doctype html>
     .label-panel h2 {
       font-size: 13px;
       margin: 0 0 8px 0;
+    }
+    .label-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .label-panel-header h2 {
+      margin: 0;
+    }
+    .label-panel-header button {
+      padding: 5px 8px;
+      font-size: 11px;
     }
     .label-row {
       display: grid;
@@ -149,7 +171,10 @@ VIEWER_HTML = """<!doctype html>
     </div>
   </header>
   <section class="label-panel">
-    <h2>Map Labels</h2>
+    <div class="label-panel-header">
+      <h2>Map Labels</h2>
+      <button id="clearLabels" class="danger">Clear Labels</button>
+    </div>
     <div id="labels"></div>
   </section>
   <canvas id="view"></canvas>
@@ -160,6 +185,7 @@ VIEWER_HTML = """<!doctype html>
     const heightEl = document.getElementById('height');
     const reloadEl = document.getElementById('reload');
     const labelModeEl = document.getElementById('labelMode');
+    const clearLabelsEl = document.getElementById('clearLabels');
     const labelsEl = document.getElementById('labels');
     let mapData = null;
     let labels = {};
@@ -196,13 +222,17 @@ VIEWER_HTML = """<!doctype html>
         return;
       }
       mapData = await response.json();
-      statusEl.textContent = `${mapData.name} (${mapData.width} x ${mapData.height}, sampled ${mapData.sampled_width} x ${mapData.sampled_height})`;
+      statusEl.textContent = `${mapData.name} (${mapData.width} x ${mapData.height}, `
+        + `sampled ${mapData.sampled_width} x ${mapData.sampled_height})`;
       await loadLabels();
       draw();
     }
 
     async function loadLabels() {
-      const response = await fetch(`/api/labels?map=${encodeURIComponent(mapData.name)}`, {cache: 'no-store'});
+      const response = await fetch(
+        `/api/labels?map=${encodeURIComponent(mapData.name)}`,
+        {cache: 'no-store'}
+      );
       if (!response.ok) {
         labels = {};
         renderLabels();
@@ -230,6 +260,30 @@ VIEWER_HTML = """<!doctype html>
       statusEl.textContent = `Saved label: ${name}`;
     }
 
+    async function clearLabels() {
+      if (!mapData) {
+        return;
+      }
+      const confirmed = window.confirm(`Clear all labels for ${mapData.name}?`);
+      if (!confirmed) {
+        return;
+      }
+      const response = await fetch('/api/labels/clear', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({map: mapData.name})
+      });
+      if (!response.ok) {
+        statusEl.textContent = await response.text();
+        return;
+      }
+      const payload = await response.json();
+      labels = payload.locations || {};
+      renderLabels();
+      draw();
+      statusEl.textContent = `Cleared labels for ${mapData.name}`;
+    }
+
     function renderLabels() {
       const names = Object.keys(labels).sort();
       if (names.length === 0) {
@@ -238,7 +292,9 @@ VIEWER_HTML = """<!doctype html>
       }
       labelsEl.innerHTML = names.map((name) => {
         const pose = labels[name];
-        return `<div class="label-row"><div class="label-name">${escapeHtml(name)}</div><div class="label-pose">${pose.x.toFixed(2)}, ${pose.y.toFixed(2)}</div></div>`;
+        return `<div class="label-row"><div class="label-name">${escapeHtml(name)}</div>`
+          + `<div class="label-pose">${pose.x.toFixed(2)}, `
+          + `${pose.y.toFixed(2)}</div></div>`;
       }).join('');
     }
 
@@ -411,7 +467,12 @@ VIEWER_HTML = """<!doctype html>
       for (const cell of cells) {
         const style = cellStyle(cell.value);
         drawBlock(cell.x, cell.y, 0.92, style.height * heightScale, style, config);
-        const [screenX, screenY] = project(cell.x, cell.y, style.height * heightScale + 0.35, config);
+        const [screenX, screenY] = project(
+          cell.x,
+          cell.y,
+          style.height * heightScale + 0.35,
+          config
+        );
         projectedCells.push({
           screenX,
           screenY,
@@ -476,10 +537,13 @@ VIEWER_HTML = """<!doctype html>
     window.addEventListener('resize', resize);
     heightEl.addEventListener('input', draw);
     reloadEl.addEventListener('click', loadMap);
+    clearLabelsEl.addEventListener('click', clearLabels);
     labelModeEl.addEventListener('click', () => {
       labelMode = !labelMode;
       labelModeEl.classList.toggle('active', labelMode);
-      statusEl.textContent = labelMode ? 'Label mode: click the map to add a label.' : 'Label mode off.';
+      statusEl.textContent = labelMode
+        ? 'Label mode: click the map to add a label.'
+        : 'Label mode off.';
     });
 
     function nearestCell(clientX, clientY) {
@@ -753,6 +817,10 @@ class MapViewerHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == '/api/labels/clear':
+            self.clear_labels()
+            return
+
         if parsed.path != '/api/labels':
             self.send_error(404, 'Not found')
             return
@@ -785,6 +853,23 @@ class MapViewerHandler(BaseHTTPRequestHandler):
 
         self.send_json(load_labels(self.map_dir, map_name))
 
+    def clear_labels(self):
+        length = int(self.headers.get('Content-Length', '0'))
+        try:
+            payload = json.loads(self.rfile.read(length).decode('utf-8'))
+        except json.JSONDecodeError:
+            self.send_error(400, 'Invalid JSON')
+            return
+
+        map_name = payload.get('map', '')
+        try:
+            write_labels(self.map_dir, map_name, {})
+        except ValueError as exc:
+            self.send_error(400, str(exc))
+            return
+
+        self.send_json(load_labels(self.map_dir, map_name))
+
     def log_message(self, format_string, *args):
         print(f'[map_3d_viewer] {self.address_string()} - {format_string % args}')
 
@@ -810,7 +895,7 @@ def main():
     parser = argparse.ArgumentParser(description='Stream a browser-based 3D map viewer.')
     parser.add_argument('--map-dir', default=DEFAULT_MAP_DIR)
     parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--port', type=int, default=8090)
+    parser.add_argument('--port', type=int, default=8092)
     args = parser.parse_args()
 
     handler = MapViewerHandler
@@ -819,7 +904,10 @@ def main():
 
     print(f'Serving 3D map viewer at http://{args.host}:{args.port}')
     print(f'Loading latest map from: {handler.map_dir}')
-    print('Over SSH, use: ssh -L 8090:localhost:8090 nvidia@<qbot-ip>')
+    print(
+        f'Over SSH, use: ssh -L {args.port}:localhost:{args.port} '
+        'nvidia@<qbot-ip>'
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

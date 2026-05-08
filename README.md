@@ -39,8 +39,20 @@ source install/setup.bash
 ros2 launch milton_final_project face_yolo_launch.py
 ```
 
-This launch file starts the face display, YOLO pipeline, and light controller.
+This launch file starts the face display, YOLO pipeline, face display web GUI,
+and light controller.
 The face UI now subscribes to `/yolo/person_target` and draws a blue border while idle, then a green border when a person is actively detected.
+
+Open the face display web GUI at:
+
+```text
+http://localhost:8080
+```
+
+When viewing from another machine, replace `localhost` with the robot's IP
+address or forward the port with SSH.
+The browser page streams the same `face_display_node` screen shown on the robot
+and includes controls for entering destinations and sending yes/no replies.
 
 ## Waiting Greeter Behavior
 
@@ -119,8 +131,41 @@ source install/setup.bash
 ros2 run milton_final_project save_latest_map
 ```
 
+Saved maps are cleaned by default: tiny occupied speckles are removed and very
+small wall gaps are closed in the generated `.pgm`. To save the unfiltered map
+instead, run:
+
+```bash
+ros2 run milton_final_project save_latest_map -- --raw
+```
+
+If you saved with `nav2_map_server map_saver_cli`, clean that saved map after
+saving:
+
+```bash
+ROS_DOMAIN_ID=57 ros2 run milton_final_project filter_saved_map -- \
+  --map /home/nvidia/857_Final_Project_Code/maps/slam_toolbox_map.yaml \
+  --overwrite
+```
+
+This keeps `.raw` backups beside the original files and removes small occupied
+speckles, small wall gaps, and thin free-space ray spikes.
+
 After it prints `Map save complete`, you can stop the mapping launch with
 `Ctrl+C`.
+
+To save the robot's current pose as the starting location for the map, run this
+after saving the map:
+
+```bash
+ROS_DOMAIN_ID=57 ros2 run milton_final_project save_robot_start_pose \
+  --map-dir /home/nvidia/857_Final_Project_Code/maps \
+  --map slam_toolbox_map.yaml
+```
+
+This resets the map's labels by default and writes `robot_start`, `start`,
+`home`, and `original` to the same pose. Add `--keep-existing-labels` if you are
+updating the start pose on a map whose other labels you want to keep.
 
 ## View A Saved Map In 3D Over SSH
 
@@ -141,13 +186,13 @@ ros2 run milton_final_project map_3d_viewer
 From your laptop, open an SSH tunnel:
 
 ```bash
-ssh -L 8090:localhost:8090 nvidia@<qbot-ip>
+ssh -L 8092:localhost:8092 nvidia@<qbot-ip>
 ```
 
 Then open this in your laptop browser:
 
 ```text
-http://localhost:8090
+http://localhost:8092
 ```
 
 Labels are saved per map. For a map named
@@ -182,6 +227,26 @@ ros2 run milton_final_project navigate_to_label overthere
 
 Use the 3D map viewer to add more labels, then replace `overthere` with the
 label name.
+
+To return to the saved starting pose:
+
+```bash
+ROS_DOMAIN_ID=57 ros2 run milton_final_project return_to_start
+```
+
+The same behavior is also available through:
+
+```bash
+ROS_DOMAIN_ID=57 ros2 run milton_final_project navigate_to_label -- --start
+```
+
+Default web ports are kept separate: live SLAM map `8090`, mapping LiDAR/filter
+viewer `8091`, saved 3D map label viewer `8092`, navigation map viewer `8093`,
+optional navigation LiDAR/filter viewer `8094`, and mapping camera stream `8095`.
+
+During mapping, the live SLAM map page on port `8090` also has buttons for
+`Save Map`, `Filter Map`, and `Save Start`. Use them in that order while the
+mapping launch is still running.
 
 ## Python Requirements
 
@@ -229,12 +294,12 @@ rather than through `pip`.
 - `src/milton_final_project/milton_final_project/robot_interpreter.py`: extracts a destination target from free-form user input
 - `src/milton_final_project/milton_final_project/robot_assistant.py`: helper for short robot-style responses using an Ollama model when available
 - `src/milton_final_project/milton_final_project/yolo_node.py`: ROS 2 node that runs YOLO on camera images and publishes annotated detections
-- `src/milton_final_project/milton_final_project/yolo_web_stream.py`: ROS 2 node that serves the annotated YOLO stream over HTTP
+- `src/milton_final_project/milton_final_project/yolo_web_stream.py`: ROS 2 node that serves the annotated YOLO camera stream over HTTP
 
 ### Launch Files
 
 - `src/milton_final_project/launch/yolo_launch.py`: launches the YOLO pipeline
-- `src/milton_final_project/launch/face_yolo_launch.py`: launches the face display, light controller, and YOLO pipeline together
+- `src/milton_final_project/launch/face_yolo_launch.py`: launches the face display, light controller, YOLO pipeline, and face display web GUI together
 
 ### Generated Build Output
 

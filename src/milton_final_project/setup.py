@@ -15,6 +15,14 @@ data_files = [
     ('share/' + package_name, ['package.xml']),
     (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
     (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+<<<<<<< Updated upstream
+=======
+    (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
+    (
+        os.path.join('share', package_name, 'behavior_trees'),
+        glob('behavior_trees/*.xml'),
+    ),
+>>>>>>> Stashed changes
 ]
 
 for root, _, files in os.walk(assets_root):
@@ -73,11 +81,38 @@ setup(
             'light_controller_node = milton_final_project.light_controller_node:main',
             'slam_keyboard_mapper_node = milton_final_project.slam_keyboard_mapper_node:main',
             'map_3d_viewer = milton_final_project.map_3d_viewer:main',
+            'live_map_web_viewer = '
+            'milton_final_project.live_map_web_viewer:main',
+            'lidar_web_viewer = '
+            'milton_final_project.lidar_web_viewer:main',
+            'lidar_self_filter_calibration = '
+            'milton_final_project.lidar_self_filter_calibration:main',
             'navigate_to_label = milton_final_project.navigate_to_label:main',
+<<<<<<< Updated upstream
             'save_latest_map = milton_final_project.save_latest_map:main',
             'initial_pose_publisher = milton_final_project.initial_pose_publisher:main',
             'qbot_odometry_node = milton_final_project.qbot_odometry_node:main',
+=======
+            'navigate_to_origin = '
+            'milton_final_project.navigate_to_origin:main',
+            'return_to_start = milton_final_project.return_to_start:main',
+            'save_latest_map = milton_final_project.save_latest_map:main',
+            'filter_saved_map = milton_final_project.filter_saved_map:main',
+            'save_robot_start_pose = '
+            'milton_final_project.save_robot_start_pose:main',
+            'set_label_yaw = milton_final_project.set_label_yaw:main',
+            'initial_pose_publisher = '
+            'milton_final_project.initial_pose_publisher:main',
+            'qbot_odometry_node = '
+            'milton_final_project.qbot_odometry_node:main',
+            'qbot_joy_cmd_vel_node = '
+            'milton_final_project.qbot_joy_cmd_vel_node:main',
+            'cmd_vel_minimum_enforcer = '
+            'milton_final_project.cmd_vel_minimum_enforcer:main',
+>>>>>>> Stashed changes
             'q_shutdown_node = milton_final_project.q_shutdown_node:main',
+            'scan_sanitizer_node = '
+            'milton_final_project.scan_sanitizer_node:main',
         ],
     },
 )

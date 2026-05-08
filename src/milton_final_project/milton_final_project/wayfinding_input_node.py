@@ -22,7 +22,10 @@ class WayfindingInputNode(Node):
         self.interpreter = RobotInterpreter()
         self.directory = SeicDirectory()
 
-        self.publish_message("Hi, I'm the navigation robot that helps you find a location or room.")
+        self.publish_message(
+            "Hi, I'm the navigation robot that helps you find a location "
+            'or room.',
+        )
         self.publish_expression('neutral')
         self.publish_light_state('waiting')
 
@@ -64,7 +67,10 @@ class WayfindingInputNode(Node):
 
             if not destination:
                 self.publish_expression('neutral')
-                self.publish_message("Hi, I'm the navigation robot that helps you find a location or room.")
+                self.publish_message(
+                    "Hi, I'm the navigation robot that helps you find a "
+                    'location or room.',
+                )
                 self.publish_light_state('waiting')
                 continue
 
@@ -92,7 +98,8 @@ class WayfindingInputNode(Node):
                 match.entry.location if match.entry.kind == 'person' else match.entry.title
             )
             self.publish_message(
-                f'{self.directory.build_response(match)} Do you need help getting to {destination_label}?'
+                f'{self.directory.build_response(match)} Do you need help '
+                f'getting to {destination_label}?'
             )
             self.publish_light_state('confirmation')
 

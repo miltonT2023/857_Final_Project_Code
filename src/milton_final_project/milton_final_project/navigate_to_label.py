@@ -119,6 +119,13 @@ class NavigateToLabelNode(Node):
         initial_x,
         initial_y,
         initial_yaw,
+<<<<<<< Updated upstream
+=======
+        current_pose_topic='/amcl_pose',
+        current_pose_timeout=10.0,
+        current_odom_topic='/odom',
+        publish_initial_pose_before_goal=False,
+>>>>>>> Stashed changes
     ):
         super().__init__('navigate_to_label')
         self.label_name = label_name
@@ -128,6 +135,15 @@ class NavigateToLabelNode(Node):
         self.initial_x = initial_x
         self.initial_y = initial_y
         self.initial_yaw = initial_yaw
+<<<<<<< Updated upstream
+=======
+        self.current_pose_topic = current_pose_topic
+        self.current_pose_timeout = current_pose_timeout
+        self.current_odom_topic = current_odom_topic
+        self.publish_initial_pose_before_goal = publish_initial_pose_before_goal
+        self.current_robot_pose = None
+        self.current_robot_pose_source = None
+>>>>>>> Stashed changes
         initial_pose_qos = QoSProfile(
             depth=10,
             reliability=ReliabilityPolicy.RELIABLE,
@@ -191,8 +207,9 @@ class NavigateToLabelNode(Node):
                 'until Nav2 finishes activating.'
             )
         self.wait_for_nav2_active()
-        self.publish_initial_pose()
-        time.sleep(1.0)
+        if self.publish_initial_pose_before_goal:
+            self.publish_initial_pose()
+            time.sleep(1.0)
 
         send_future = self.action_client.send_goal_async(
             goal,
@@ -365,7 +382,26 @@ def main(args=None):
     parser = argparse.ArgumentParser(
         description='Send a Nav2 goal from maps/map_labels.yaml.',
     )
+<<<<<<< Updated upstream
     parser.add_argument('label', help='Label name, for example entrance or room_101.')
+=======
+    parser.add_argument(
+        'label',
+        nargs='?',
+        default=None,
+        help='Label name, for example entrance, room_101, or robot_start.',
+    )
+    parser.add_argument(
+        '--start',
+        action='store_true',
+        help='Return to the saved robot_start label.',
+    )
+    parser.add_argument(
+        '--start-label',
+        default='robot_start',
+        help='Start label name used with --start or when no label is given.',
+    )
+>>>>>>> Stashed changes
     parser.add_argument(
         '--labels-file',
         default=None,
@@ -385,18 +421,58 @@ def main(args=None):
     parser.add_argument('--initial-x', default=0.0, type=float)
     parser.add_argument('--initial-y', default=0.0, type=float)
     parser.add_argument('--initial-yaw', default=0.0, type=float)
+<<<<<<< Updated upstream
     parsed_args = parser.parse_args(args=sys.argv[1:] if args is None else args)
+=======
+    parser.add_argument(
+        '--current-pose-topic',
+        default='/amcl_pose',
+        help='Navigation pose topic to use for the AMCL initial pose.',
+    )
+    parser.add_argument(
+        '--current-pose-timeout',
+        default=10.0,
+        type=float,
+        help='Seconds to wait for the current navigation pose.',
+    )
+    parser.add_argument(
+        '--current-odom-topic',
+        default='/odom',
+        help='Odometry topic to use when AMCL has not published a pose yet.',
+    )
+    parser.add_argument(
+        '--publish-initial-pose-before-goal',
+        action='store_true',
+        help=(
+            'Publish an initial AMCL pose before sending the goal. Leave this '
+            'off when qbot_navigation_launch.py already set robot_start.'
+        ),
+    )
+    parsed_args = parser.parse_args(
+        args=sys.argv[1:] if args is None else args
+    )
+    label_name = parsed_args.start_label if parsed_args.start else parsed_args.label
+    if label_name is None:
+        label_name = parsed_args.start_label
+>>>>>>> Stashed changes
     labels_file = parsed_args.labels_file or default_labels_file()
 
     rclpy.init()
     node = NavigateToLabelNode(
-        parsed_args.label,
+        label_name,
         labels_file,
         parsed_args.action_name,
         parsed_args.wait_timeout,
         parsed_args.initial_x,
         parsed_args.initial_y,
         parsed_args.initial_yaw,
+<<<<<<< Updated upstream
+=======
+        parsed_args.current_pose_topic,
+        parsed_args.current_pose_timeout,
+        parsed_args.current_odom_topic,
+        parsed_args.publish_initial_pose_before_goal,
+>>>>>>> Stashed changes
     )
     try:
         node.send_goal()

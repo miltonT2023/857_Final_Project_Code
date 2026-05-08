@@ -97,7 +97,8 @@ class YoloNode(Node):
             return str(fallback_path)
 
         raise FileNotFoundError(
-            f'Could not find requested model {requested_model_path!r} or fallback {fallback_model!r}.'
+            f'Could not find requested model {requested_model_path!r} or '
+            f'fallback {fallback_model!r}.'
         )
 
     def find_model_path(self, model_path: str):
