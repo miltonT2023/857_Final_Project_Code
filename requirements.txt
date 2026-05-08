@@ -6,6 +6,10 @@ opencv-python
 ultralytics
 rapidfuzz
 pytest
+# Python 3.8/aarch64 needs this wheel; newer tokenizers may try to build from source.
+tokenizers==0.20.3
+faster-whisper
+sounddevice
 
 # ROS 2 dependencies used by the nodes are typically installed via apt/rosdep,
 # not pip: rclpy, ament_index_python, cv_bridge, sensor_msgs, std_msgs,

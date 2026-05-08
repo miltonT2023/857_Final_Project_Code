@@ -1,5 +1,4 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
@@ -52,15 +51,27 @@ def generate_launch_description():
         executable='face_display_node',
         name='face_display_node',
         output='screen',
+        additional_env={
+            'LD_PRELOAD': '/lib/aarch64-linux-gnu/libgomp.so.1',
+        },
         parameters=[
             {'width': 1024},
             {'height': 600},
             {'fullscreen': True},
             {'show_help': False},
             {'initial_expression': 'neutral'},
+            {'web_stream_enabled': True},
+            {'web_stream_host': '0.0.0.0'},
+            {'web_stream_port': 8080},
+            {'stt_enabled': True},
+            {'stt_backend': 'faster_whisper'},
+            {'stt_model_size': 'base'},
+            {'stt_device': 'auto'},
+            {'stt_compute_type': 'auto'},
+            {'stt_local_files_only': False},
             {
                 'waiting_message':
-                "Hi, I'm the navigation robot that helps you find a location or room."
+                "Hello, Hi, I love butter. I'm the nagivation robot that helps you find a location or room."
             },
             {'response_duration_sec': 10.0},
         ],
