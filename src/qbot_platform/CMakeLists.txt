@@ -52,9 +52,8 @@ install(DIRECTORY launch
 )
 
 install(PROGRAMS
+  scripts/go_to_label.py
   scripts/led_controller.py
-  scripts/publish_home_initial_pose.py
-  scripts/roundtrip_to_target_node.py
   scripts/wheel_odometry.py
   DESTINATION lib/${PROJECT_NAME}
 )

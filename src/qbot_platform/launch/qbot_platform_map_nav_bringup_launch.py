@@ -13,7 +13,7 @@ def generate_launch_description():
     package_dir = get_package_share_directory("qbot_platform")
     nav2_dir = get_package_share_directory("nav2_bringup")
 
-    default_map = "/home/nvidia/857ChuanLi/maps/lab_map.yaml"
+    default_map = "/home/nvidia/857_Final_Project_Code/maps/lab_map_new.yaml"
     params_file = os.path.join(package_dir, "config", "qbot_platform_slam_and_nav.yaml")
 
     map_arg = DeclareLaunchArgument("map", default_value=default_map)
@@ -63,6 +63,13 @@ def generate_launch_description():
         }.items(),
     )
 
+    go_to_label_node = Node(
+        package="qbot_platform",
+        executable="go_to_label.py",
+        name="go_to_label",
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             map_arg,
@@ -71,5 +78,6 @@ def generate_launch_description():
             wheel_odom_node,
             localization_launch,
             navigation_launch,
+            go_to_label_node,
         ]
     )

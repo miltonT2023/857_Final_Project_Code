@@ -1,0 +1,58 @@
+{
+  "map": "lab_map_new.pgm",
+  "yaml": "lab_map_new.yaml",
+  "labels": [
+    {
+      "id": "moxpraee-dfe0ln",
+      "name": "Xiaorong Zhang",
+      "kind": "person",
+      "detail": "SEIC 349",
+      "source": "seic_public_directory_with_schedule.xlsx",
+      "x": 914,
+      "y": 710,
+      "world": {
+        "x": 3.74,
+        "y": -0.5299999999999994
+      }
+    },
+    {
+      "id": "moxprsez-coq6v4",
+      "name": "SEIC 313",
+      "kind": "room",
+      "detail": "Lab - Lab",
+      "source": "seic_public_directory_with_schedule.xlsx",
+      "x": 739,
+      "y": 692,
+      "world": {
+        "x": 1.9900000000000002,
+        "y": -0.34999999999999964
+      }
+    },
+    {
+      "id": "moxsn3f0-exvt0c",
+      "name": "SEIC 515",
+      "kind": "room",
+      "detail": "Classroom - Classroom",
+      "source": "seic_public_directory_with_schedule.xlsx",
+      "x": 1220,
+      "y": 726,
+      "world": {
+        "x": 6.800000000000001,
+        "y": -0.6899999999999995
+      }
+    },
+    {
+      "id": "moxspm5k-ssyedg",
+      "name": "SEIC 403",
+      "kind": "room",
+      "detail": "Classroom - Classroom",
+      "source": "seic_public_directory_with_schedule.xlsx",
+      "x": 855,
+      "y": 725,
+      "world": {
+        "x": 3.1500000000000004,
+        "y": -0.6799999999999997
+      }
+    }
+  ]
+}

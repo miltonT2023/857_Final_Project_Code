@@ -3,7 +3,7 @@
 <package format="3">
   <name>qbot_platform</name>
   <version>0.0.0</version>
-  <description>Demo-ready QBot platform roundtrip navigation package.</description>
+  <description>QBot hardware, platform, and label-driven Nav2 navigation package.</description>
   <maintainer email="ChuanLi2025@users.noreply.github.com">Chuan Li</maintainer>
   <license>Apache-2.0</license>
 
@@ -24,6 +24,7 @@
   <exec_depend>nav2_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 

@@ -8,14 +8,18 @@ import base64
 import json
 import mimetypes
 import re
+from zipfile import ZipFile
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from xml.etree import ElementTree as ET
 from urllib.parse import parse_qs, unquote, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MAPS_DIR = ROOT / "maps"
+DIRECTORY_FILE = ROOT / "data" / "seic_public_directory_with_schedule.xlsx"
+XLSX_NS = {"a": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 
 INDEX_HTML = r"""<!doctype html>
@@ -217,7 +221,7 @@ INDEX_HTML = r"""<!doctype html>
       <section class="side-section">
         <h2 class="side-title">Add Label</h2>
         <div class="form-row">
-          <input id="labelInput" placeholder="Label name" autocomplete="off" />
+          <select id="labelSelect" title="Label"></select>
           <button id="addModeBtn" class="primary">Place</button>
         </div>
       </section>
@@ -242,7 +246,7 @@ INDEX_HTML = r"""<!doctype html>
     const viewer = document.getElementById('viewer');
     const statusEl = document.getElementById('status');
     const mapSelect = document.getElementById('mapSelect');
-    const labelInput = document.getElementById('labelInput');
+    const labelSelect = document.getElementById('labelSelect');
     const editInput = document.getElementById('editInput');
     const labelList = document.getElementById('labelList');
 
@@ -252,6 +256,7 @@ INDEX_HTML = r"""<!doctype html>
       mapMeta: null,
       labels: [],
       selectedId: null,
+      labelOptions: [],
       placing: false,
       zoom: 1,
       dirty: false,
@@ -378,6 +383,42 @@ INDEX_HTML = r"""<!doctype html>
       await loadMap(data.maps[0].name);
     }
 
+    async function loadLabelOptions() {
+      const data = await fetchJson('/api/label-options');
+      state.labelOptions = data.labels || [];
+      labelSelect.innerHTML = '';
+      if (!state.labelOptions.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No directory labels found';
+        labelSelect.appendChild(option);
+        labelSelect.disabled = true;
+        return;
+      }
+      for (const label of state.labelOptions) {
+        const option = document.createElement('option');
+        option.value = label.name;
+        option.textContent = label.detail ? `${label.name} (${label.detail})` : label.name;
+        option.dataset.kind = label.kind || '';
+        option.dataset.detail = label.detail || '';
+        option.dataset.source = label.source || '';
+        labelSelect.appendChild(option);
+      }
+    }
+
+    function selectedLabelTemplate() {
+      const option = labelSelect.selectedOptions[0];
+      if (!option || !option.value) {
+        return { name: `Label ${state.labels.length + 1}` };
+      }
+      return {
+        name: option.value,
+        kind: option.dataset.kind || undefined,
+        detail: option.dataset.detail || undefined,
+        source: option.dataset.source || undefined,
+      };
+    }
+
     async function loadMap(name) {
       setStatus(`Loading ${name}...`);
       const data = await fetchJson(`/api/map?name=${encodeURIComponent(name)}`);
@@ -442,13 +483,12 @@ INDEX_HTML = r"""<!doctype html>
       if (point.x < 0 || point.y < 0 || point.x >= canvas.width || point.y >= canvas.height) return;
 
       if (state.placing) {
-        const name = labelInput.value.trim() || `Label ${state.labels.length + 1}`;
-        const label = { id: newId(), name, x: point.x, y: point.y };
+        const template = selectedLabelTemplate();
+        const label = { id: newId(), ...template, x: point.x, y: point.y };
         state.labels.push(label);
         state.selectedId = label.id;
         state.placing = false;
         document.getElementById('addModeBtn').textContent = 'Place';
-        labelInput.value = '';
         markDirty();
       } else {
         let nearest = null;
@@ -530,7 +570,7 @@ INDEX_HTML = r"""<!doctype html>
       if (state.mapImage) applyZoom();
     });
 
-    loadMaps().catch(error => setStatus(error.message));
+    Promise.all([loadLabelOptions(), loadMaps()]).catch(error => setStatus(error.message));
   </script>
 </body>
 </html>
@@ -589,6 +629,102 @@ def parse_yaml(path: Path) -> dict:
     return meta
 
 
+def xlsx_col(ref: str) -> str:
+    return re.sub(r"\d+", "", ref)
+
+
+def xlsx_cell_text(cell: ET.Element, shared_strings: list[str]) -> str:
+    if cell.get("t") == "inlineStr":
+        return "".join(text.text or "" for text in cell.findall(".//a:t", XLSX_NS)).strip()
+
+    value = cell.find("a:v", XLSX_NS)
+    text = "" if value is None else value.text or ""
+    if cell.get("t") == "s" and text:
+        text = shared_strings[int(text)]
+    return text.strip()
+
+
+def read_xlsx_rows(path: Path, sheet_path: str) -> list[dict[str, str]]:
+    with ZipFile(path) as workbook:
+        shared_strings: list[str] = []
+        if "xl/sharedStrings.xml" in workbook.namelist():
+            root = ET.fromstring(workbook.read("xl/sharedStrings.xml"))
+            shared_strings = [
+                "".join(text.text or "" for text in item.findall(".//a:t", XLSX_NS))
+                for item in root.findall("a:si", XLSX_NS)
+            ]
+
+        sheet = ET.fromstring(workbook.read(sheet_path))
+        rows: list[dict[str, str]] = []
+        for row in sheet.findall(".//a:sheetData/a:row", XLSX_NS):
+            values: dict[str, str] = {}
+            for cell in row.findall("a:c", XLSX_NS):
+                values[xlsx_col(cell.get("r", ""))] = xlsx_cell_text(cell, shared_strings)
+            rows.append(values)
+        return rows
+
+
+def load_label_options() -> list[dict[str, str]]:
+    if not DIRECTORY_FILE.exists():
+        return []
+
+    options: list[dict[str, str]] = []
+
+    try:
+        for row in read_xlsx_rows(DIRECTORY_FILE, "xl/worksheets/sheet2.xml")[1:]:
+            room = row.get("A", "")
+            if room:
+                detail = " - ".join(part for part in [row.get("C", ""), row.get("D", "")] if part)
+                options.append(
+                    {
+                        "name": room,
+                        "kind": "room",
+                        "detail": detail,
+                        "source": DIRECTORY_FILE.name,
+                    }
+                )
+
+        for row in read_xlsx_rows(DIRECTORY_FILE, "xl/worksheets/sheet3.xml")[1:]:
+            name = row.get("A", "")
+            office = row.get("D", "")
+            if name:
+                options.append(
+                    {
+                        "name": name,
+                        "kind": "person",
+                        "detail": office,
+                        "source": DIRECTORY_FILE.name,
+                    }
+                )
+
+        for row in read_xlsx_rows(DIRECTORY_FILE, "xl/worksheets/sheet4.xml")[1:]:
+            space = row.get("A", "")
+            location = row.get("B", "")
+            if space:
+                options.append(
+                    {
+                        "name": space,
+                        "kind": "space",
+                        "detail": location,
+                        "source": DIRECTORY_FILE.name,
+                    }
+                )
+    except Exception as exc:
+        print(f"Could not load label options from {DIRECTORY_FILE}: {exc}")
+        return []
+
+    seen: set[tuple[str, str]] = set()
+    unique_options: list[dict[str, str]] = []
+    for option in options:
+        key = (option.get("kind", ""), option.get("name", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_options.append(option)
+
+    return sorted(unique_options, key=lambda item: (item.get("kind", ""), item.get("name", "")))
+
+
 def label_path_for(map_path: Path) -> Path:
     return map_path.with_name(f"{map_path.stem}_labels.json")
 
@@ -631,6 +767,8 @@ class Handler(BaseHTTPRequestHandler):
             elif parsed.path == "/api/maps":
                 maps = [{"name": path.name} for path in sorted(MAPS_DIR.glob("*.pgm"))]
                 self.write_json({"maps": maps})
+            elif parsed.path == "/api/label-options":
+                self.write_json({"labels": load_label_options()})
             elif parsed.path == "/api/map":
                 params = parse_qs(parsed.query)
                 name = safe_map_name(params.get("name", [""])[0])
