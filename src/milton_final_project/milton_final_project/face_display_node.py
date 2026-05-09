@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
 import textwrap
 
 from ament_index_python.packages import get_package_share_directory
@@ -14,8 +13,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
-from .robot_interpreter import RobotInterpreter
-from .seic_directory import SeicDirectory
+from .status_qos import status_qos
 
 
 @dataclass(frozen=True)
@@ -36,8 +34,11 @@ class FaceDisplayNode(Node):
         self.declare_parameter('height', 600)
         self.declare_parameter('fullscreen', True)
         self.declare_parameter('show_help', False)
+        self.declare_parameter('message_topic', '/robot/message')
+        self.declare_parameter('display_status_topic', '/face/status_message')
         self.declare_parameter('preview_topic', '/yolo/annotated_image')
         self.declare_parameter('person_target_topic', '/yolo/person_target')
+        self.declare_parameter('stage_topic', '/robot/stage')
         self.declare_parameter('initial_expression', 'neutral')
         self.declare_parameter(
             'waiting_message',
@@ -60,7 +61,10 @@ class FaceDisplayNode(Node):
             self.get_parameter('navigation_timeout_sec').value
         )
         self.preview_topic = self.get_parameter('preview_topic').value
+        self.message_topic = self.get_parameter('message_topic').value
+        self.display_status_topic = self.get_parameter('display_status_topic').value
         self.person_target_topic = self.get_parameter('person_target_topic').value
+        self.stage_topic = self.get_parameter('stage_topic').value
         self.expression_index = 0
 
         pygame.init()
@@ -132,14 +136,7 @@ class FaceDisplayNode(Node):
         self.override_message = None
         self.override_until = None
         self.input_buffer = ''
-        self.pending_future = None
-        self.pending_destination_label = None
-        self.awaiting_confirmation = False
-        self.navigation_mode_active = False
-        self.state_timeout_at = None
-        self.assistant_pool = ThreadPoolExecutor(max_workers=1)
-        self.interpreter = RobotInterpreter()
-        self.directory = SeicDirectory()
+        self.stage = 'waiting'
         self.bridge = CvBridge()
         self.preview_surface = None
         self.preview_size = (
@@ -167,7 +164,13 @@ class FaceDisplayNode(Node):
         )
         self.message_sub = self.create_subscription(
             String,
-            '/face/message',
+            self.message_topic,
+            self.message_callback,
+            10,
+        )
+        self.display_status_sub = self.create_subscription(
+            String,
+            self.display_status_topic,
             self.message_callback,
             10,
         )
@@ -183,18 +186,21 @@ class FaceDisplayNode(Node):
             self.person_target_callback,
             10,
         )
-        self.light_state_pub = self.create_publisher(String, '/robot/light_state', 10)
+        self.stage_sub = self.create_subscription(
+            String,
+            self.stage_topic,
+            self.stage_callback,
+            status_qos(),
+        )
         self.user_input_pub = self.create_publisher(String, '/wayfinding/user_input', 10)
-        self.label_pub = self.create_publisher(String, '/label', 10)
-        self.last_light_state = None
 
         self.timer = self.create_timer(1.0 / 30.0, self.update_frame)
-        self.publish_light_state()
         self.get_logger().info(f'Face monitor ready with assets from: {self.assets_dir}')
         self.get_logger().info(f'Face preview subscribed to: {self.preview_topic}')
         self.get_logger().info(
             f'Face border subscribed to person target topic: {self.person_target_topic}'
         )
+        self.get_logger().info(f'Face stage subscribed to: {self.stage_topic}')
 
     def load_image(self, relative_path: str) -> pygame.Surface:
         path = self.assets_dir / relative_path
@@ -260,44 +266,14 @@ class FaceDisplayNode(Node):
         self.override_expression = None
         self.override_message = None
         self.override_until = None
-        self.pending_destination_label = None
-        self.awaiting_confirmation = False
-        self.navigation_mode_active = False
-        self.state_timeout_at = None
         self.active_expression = self.idle_expression
         self.current_message = self.waiting_message
         self.set_expression(self.idle_expression)
-        self.publish_light_state()
-
-    def current_light_state(self) -> str:
-        if self.navigation_mode_active:
-            return 'navigation'
-        if self.awaiting_confirmation:
-            return 'confirmation'
-        return 'waiting'
-
-    def publish_light_state(self):
-        state = self.current_light_state()
-        if state == self.last_light_state:
-            return
-
-        msg = String()
-        msg.data = state
-        self.light_state_pub.publish(msg)
-        self.last_light_state = state
 
     def publish_user_input(self, prompt_type: str, text: str):
         msg = String()
         msg.data = f'{prompt_type}|{text}'
         self.user_input_pub.publish(msg)
-
-    def publish_destination_label(self):
-        if not self.pending_destination_label:
-            return
-
-        msg = String()
-        msg.data = self.pending_destination_label
-        self.label_pub.publish(msg)
 
     def expression_callback(self, msg: String):
         expression = msg.data.strip()
@@ -337,6 +313,13 @@ class FaceDisplayNode(Node):
             return
 
         self.person_detected = bool(payload.get('seen', False))
+
+    def stage_callback(self, msg: String):
+        stage = msg.data.strip().lower()
+        if not stage:
+            return
+
+        self.stage = stage
 
     def current_gaze_offset(self):
         if self.override_expression == 'happy':
@@ -474,9 +457,9 @@ class FaceDisplayNode(Node):
         box_rect = box_surface.get_rect(midbottom=(self.cx, self.height - 8))
         self.screen.blit(box_surface, box_rect)
 
-        if self.awaiting_confirmation:
+        if self.stage == 'confirmation':
             placeholder = 'Type yes or no...'
-        elif self.navigation_mode_active:
+        elif self.stage == 'navigation':
             placeholder = 'Press Enter to start over...'
         else:
             placeholder = 'Room or location...'
@@ -544,7 +527,7 @@ class FaceDisplayNode(Node):
         )
 
     def draw(self):
-        if self.navigation_mode_active:
+        if self.stage == 'navigation':
             self.draw_navigation_mode()
             self.draw_detection_border()
             pygame.display.flip()
@@ -578,12 +561,6 @@ class FaceDisplayNode(Node):
             True,
             self.navigation_text,
         )
-        destination = self.pending_destination_label or 'your destination'
-        detail = self.message_font.render(
-            destination,
-            True,
-            self.navigation_text,
-        )
 
         self.screen.blit(
             headline,
@@ -593,113 +570,17 @@ class FaceDisplayNode(Node):
             subline,
             subline.get_rect(center=(self.cx, self.height // 2 + 10)),
         )
-        self.screen.blit(
-            detail,
-            detail.get_rect(center=(self.cx, self.height // 2 + 64)),
-        )
 
     def process_destination(self):
-        destination = self.input_buffer.strip()
+        user_text = self.input_buffer.strip()
         self.input_buffer = ''
 
-        if destination.lower() == 'q':
+        if user_text.lower() == 'q':
             rclpy.shutdown()
             return
 
-        if not destination:
-            self.clear_override()
-            return
-
-        prompt_type = 'confirmation' if self.awaiting_confirmation else 'destination'
-        self.publish_user_input(prompt_type, destination)
-
-        if self.navigation_mode_active:
-            self.clear_override()
-            return
-
-        if self.awaiting_confirmation:
-            self.handle_confirmation_response(destination)
-            return
-
-        if self.interpreter.is_conversation_end(destination):
-            ending = self.interpreter.ending_response(destination)
-            self.set_override(
-                expression=ending['expression'],
-                message=ending['message'],
-            )
-            self.state_timeout_at = self.now_seconds() + self.response_duration_sec
-            return
-
-        if self.pending_future is not None and not self.pending_future.done():
-            self.set_override(expression='confused', message='I am still processing the last request.')
-            return
-
-        self.set_override(expression='confused', message=f'Looking up {destination} in the SEIC directory.')
-        self.pending_future = self.assistant_pool.submit(self.lookup_destination, destination)
-
-    def lookup_destination(self, destination: str):
-        target = self.interpreter.extract_target(destination)
-        match = self.directory.find_best_match(target or destination)
-        base_message = self.directory.build_response(match)
-        expression = self.directory.expression_for_match(match)
-        if match.entry is None:
-            return {
-                'message': base_message,
-                'expression': expression,
-                'await_confirmation': False,
-                'destination_label': None,
-            }
-
-        destination_label = match.entry.location if match.entry.kind == 'person' else match.entry.title
-        message = (
-            f'{base_message} Do you need help getting to {destination_label}? '
-            'Please type yes or no.'
-        )
-        return {
-            'message': message,
-            'expression': expression,
-            'await_confirmation': True,
-            'destination_label': destination_label,
-        }
-
-    def handle_confirmation_response(self, response: str):
-        normalized = response.strip().lower()
-        yes_tokens = {'yes', 'y', 'yeah', 'yep', 'sure', 'ok', 'okay'}
-        no_tokens = {'no', 'n', 'nope', 'nah'}
-
-        if normalized in yes_tokens:
-            self.publish_destination_label()
-            self.navigation_mode_active = True
-            self.awaiting_confirmation = False
-            self.override_expression = None
-            self.override_message = None
-            self.override_until = None
-            self.active_expression = 'happy'
-            self.set_expression('happy')
-            self.current_message = 'Going to navigation mode.'
-            self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
-            self.publish_light_state()
-            return
-
-        if normalized in no_tokens:
-            self.set_override(
-                expression='neutral',
-                message='Okay. If you need anything else, ask me about another room or person.',
-            )
-            self.awaiting_confirmation = False
-            self.pending_destination_label = None
-            self.state_timeout_at = self.now_seconds() + self.response_duration_sec
-            self.publish_light_state()
-            return
-
-        destination_label = self.pending_destination_label or 'that location'
-        self.set_override(
-            expression='confused',
-            message=f'Please answer yes or no. Do you need help getting to {destination_label}?',
-        )
-        self.awaiting_confirmation = True
-        self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
-        self.publish_light_state()
+        prompt_type = 'confirmation' if self.stage == 'confirmation' else 'destination'
+        self.publish_user_input(prompt_type, user_text)
 
     def now_seconds(self) -> float:
         return self.get_clock().now().nanoseconds / 1e9
@@ -715,47 +596,18 @@ class FaceDisplayNode(Node):
     def update_frame(self):
         self.clock.tick(30)
 
-        if self.pending_future is not None and self.pending_future.done():
-            try:
-                reply = self.pending_future.result()
-                self.set_override(expression=reply['expression'], message=reply['message'])
-                self.pending_destination_label = reply['destination_label']
-                self.awaiting_confirmation = reply['await_confirmation']
-                if self.awaiting_confirmation:
-                    self.state_timeout_at = self.now_seconds() + self.confirmation_timeout_sec
-                self.publish_light_state()
-            except Exception as exc:
-                self.get_logger().warning(f'Destination lookup failed: {exc!r}')
-                self.set_override(
-                    expression='confused',
-                    message='Sorry, I had trouble thinking of a reply just now.',
-                )
-                self.publish_light_state()
-            finally:
-                self.pending_future = None
-
         if (
             self.override_until is not None
             and self.now_seconds() >= self.override_until
         ):
-            if not self.awaiting_confirmation and not self.navigation_mode_active:
+            if self.stage == 'waiting':
                 self.clear_override()
-
-        if self.state_timeout_at is not None and self.now_seconds() >= self.state_timeout_at:
-            self.clear_override()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 rclpy.shutdown()
                 return
             if event.type == pygame.KEYDOWN:
-                if self.awaiting_confirmation or self.navigation_mode_active:
-                    timeout_window = (
-                        self.navigation_timeout_sec
-                        if self.navigation_mode_active
-                        else self.confirmation_timeout_sec
-                    )
-                    self.state_timeout_at = self.now_seconds() + timeout_window
                 if event.key == pygame.K_ESCAPE:
                     rclpy.shutdown()
                     return
@@ -770,7 +622,6 @@ class FaceDisplayNode(Node):
         self.draw()
 
     def destroy_node(self):
-        self.assistant_pool.shutdown(wait=False)
         pygame.quit()
         super().destroy_node()
 

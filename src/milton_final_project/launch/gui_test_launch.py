@@ -24,6 +24,19 @@ def generate_launch_description():
         )
     )
 
+    realsense_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('realsense2_camera'),
+                'launch',
+                'rs_launch.py',
+            ])
+        ),
+        launch_arguments={
+            'align_depth.enable': 'true',
+        }.items(),
+    )
+
     face_display_node = Node(
         package='milton_final_project',
         executable='face_display_node',
@@ -45,6 +58,31 @@ def generate_launch_description():
             {'confirmation_timeout_sec': 60.0},
             {'navigation_timeout_sec': 20.0},
         ],
+    )
+
+    main_controller_node = Node(
+        package='milton_final_project',
+        executable='main_controller_node',
+        name='main_controller_node',
+        output='screen',
+        parameters=[
+            {
+                'waiting_message': (
+                    'I am the SEIC navigation robot. Please enter the person '
+                    'or room you are trying to find.'
+                ),
+            },
+            {'response_duration_sec': 10.0},
+            {'confirmation_timeout_sec': 60.0},
+            {'navigation_timeout_sec': 20.0},
+        ],
+    )
+
+    speech_node = Node(
+        package='milton_final_project',
+        executable='speech_node',
+        name='speech_node',
+        output='screen',
     )
 
     waiting_person_greeter_node = Node(
@@ -99,7 +137,10 @@ def generate_launch_description():
         DeclareLaunchArgument('confidence', default_value='0.25'),
         DeclareLaunchArgument('idle_search_delay_sec', default_value='2.0'),
         qbot_platform_driver_launch,
+        realsense_launch,
         face_display_node,
+        main_controller_node,
+        speech_node,
         waiting_person_greeter_node,
         light_controller_node,
         yolo_node,

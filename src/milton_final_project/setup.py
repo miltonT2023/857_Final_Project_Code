@@ -64,6 +64,8 @@ setup(
     entry_points={
         'console_scripts': [
             'face_display_node = milton_final_project.face_display_node:main',
+            'main_controller_node = milton_final_project.main_controller_node:main',
+            'speech_node = milton_final_project.speech_node:main',
             'yolo_node = milton_final_project.yolo_node:main',
             'waiting_person_greeter_node = milton_final_project.waiting_person_greeter_node:main',
             'yolo_web_stream = milton_final_project.yolo_web_stream:main',

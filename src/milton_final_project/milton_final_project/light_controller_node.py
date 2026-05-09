@@ -4,12 +4,14 @@ from std_msgs.msg import ColorRGBA
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import String
 
+from .status_qos import status_qos
+
 
 class LightControllerNode(Node):
     def __init__(self):
         super().__init__('light_controller_node')
 
-        self.declare_parameter('state_topic', '/robot/light_state')
+        self.declare_parameter('state_topic', '/robot/stage')
         self.declare_parameter('led_topic', '/qbot_led_strip')
         self.declare_parameter('qbot_led_topic', '/qbot_platform/led')
         self.declare_parameter('flash_period_sec', 0.5)
@@ -25,10 +27,15 @@ class LightControllerNode(Node):
 
         self.color_pub = self.create_publisher(ColorRGBA, led_topic, 10)
         self.qbot_color_pub = self.create_publisher(Float32MultiArray, qbot_led_topic, 10)
-        self.state_sub = self.create_subscription(String, state_topic, self.state_callback, 10)
+        self.state_sub = self.create_subscription(
+            String,
+            state_topic,
+            self.state_callback,
+            status_qos(),
+        )
         self.timer = self.create_timer(0.1, self.update_led)
 
-        self.get_logger().info(f'Listening for light states on: {state_topic}')
+        self.get_logger().info(f'Listening for robot stage on: {state_topic}')
         self.get_logger().info(f'Publishing ColorRGBA LEDs to: {led_topic}')
         self.get_logger().info(f'Publishing QBot LED arrays to: {qbot_led_topic}')
         self.get_logger().info('Light state changed to: waiting')
@@ -45,7 +52,7 @@ class LightControllerNode(Node):
             self.current_state = state
             self.last_flash_toggle_at = self.now_seconds()
             self.flash_on = True
-            self.get_logger().info(f'Light state changed to: {self.current_state}')
+            self.get_logger().info(f'LED state changed to: {self.current_state}')
             self.update_led()
 
     def state_to_color(self):

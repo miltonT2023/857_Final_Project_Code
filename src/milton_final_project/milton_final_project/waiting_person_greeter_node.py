@@ -4,16 +4,18 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
+from .status_qos import status_qos
+
 
 class WaitingPersonGreeterNode(Node):
     def __init__(self):
         super().__init__('waiting_person_greeter_node')
 
         self.declare_parameter('person_target_topic', '/yolo/person_target')
-        self.declare_parameter('state_topic', '/robot/light_state')
+        self.declare_parameter('state_topic', '/robot/stage')
         self.declare_parameter('user_input_topic', '/wayfinding/user_input')
         self.declare_parameter('expression_topic', '/face/expression')
-        self.declare_parameter('message_topic', '/face/message')
+        self.declare_parameter('message_topic', '/robot/message')
         self.declare_parameter('person_timeout_sec', 0.8)
         self.declare_parameter('idle_search_delay_sec', 90.0)
         self.declare_parameter('stable_detection_sec', 0.2)
@@ -60,7 +62,7 @@ class WaitingPersonGreeterNode(Node):
             String,
             state_topic,
             self.state_callback,
-            10,
+            status_qos(),
         )
         self.user_input_sub = self.create_subscription(
             String,

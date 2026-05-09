@@ -11,6 +11,8 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from ultralytics import YOLO
 
+from .status_qos import status_qos
+
 
 class YoloNode(Node):
     def __init__(self):
@@ -24,7 +26,7 @@ class YoloNode(Node):
         )
         self.declare_parameter('confidence', 0.25)
         self.declare_parameter('camera_horizontal_fov_deg', 69.4)
-        self.declare_parameter('state_topic', '/robot/light_state')
+        self.declare_parameter('state_topic', '/robot/stage')
 
         requested_model_path = self.get_parameter('detection_model').value
         image_topic = self.get_parameter('image_topic').value
@@ -71,7 +73,7 @@ class YoloNode(Node):
             String,
             state_topic,
             self.state_callback,
-            10,
+            status_qos(),
         )
         self.get_logger().info(f'Subscribed to camera topic: {image_topic}')
         self.get_logger().info(f'Subscribed to depth topic: {depth_topic}')

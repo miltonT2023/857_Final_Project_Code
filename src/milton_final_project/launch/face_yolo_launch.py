@@ -66,6 +66,27 @@ def generate_launch_description():
         ],
     )
 
+    main_controller_node = Node(
+        package='milton_final_project',
+        executable='main_controller_node',
+        name='main_controller_node',
+        output='screen',
+        parameters=[
+            {
+                'waiting_message':
+                "Hi, I'm the navigation robot that helps you find a location or room."
+            },
+            {'response_duration_sec': 10.0},
+        ],
+    )
+
+    speech_node = Node(
+        package='milton_final_project',
+        executable='speech_node',
+        name='speech_node',
+        output='screen',
+    )
+
     light_controller_node = Node(
         package='milton_final_project',
         executable='light_controller_node',
@@ -86,5 +107,7 @@ def generate_launch_description():
         yolo_node,
         waiting_person_greeter_node,
         face_display_node,
+        main_controller_node,
+        speech_node,
         light_controller_node,
     ])
