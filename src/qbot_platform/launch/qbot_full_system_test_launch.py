@@ -23,6 +23,7 @@ def generate_launch_description():
     map_yaml = LaunchConfiguration("map")
     milton_start_delay = LaunchConfiguration("milton_start_delay")
     fullscreen = LaunchConfiguration("fullscreen")
+    show_preview = LaunchConfiguration("show_preview")
     use_camera = LaunchConfiguration("use_camera")
     use_yolo = LaunchConfiguration("use_yolo")
     use_web_stream = LaunchConfiguration("use_web_stream")
@@ -36,6 +37,7 @@ def generate_launch_description():
     depth_topic = LaunchConfiguration("depth_topic")
     confidence = LaunchConfiguration("confidence")
     web_stream_port = LaunchConfiguration("web_stream_port")
+    idle_search_delay_sec = LaunchConfiguration("idle_search_delay_sec")
 
     map_arg = DeclareLaunchArgument(
         "map",
@@ -51,6 +53,11 @@ def generate_launch_description():
         "fullscreen",
         default_value="true",
         description="Start the face display in fullscreen mode.",
+    )
+    show_preview_arg = DeclareLaunchArgument(
+        "show_preview",
+        default_value="false",
+        description="Show the YOLO camera preview on the face display.",
     )
     use_camera_arg = DeclareLaunchArgument(
         "use_camera",
@@ -117,6 +124,11 @@ def generate_launch_description():
         default_value="8080",
         description="YOLO web stream port.",
     )
+    idle_search_delay_sec_arg = DeclareLaunchArgument(
+        "idle_search_delay_sec",
+        default_value="2.0",
+        description="Idle seconds before the greeter reacts to a detected person.",
+    )
 
     qbot_navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -181,6 +193,7 @@ def generate_launch_description():
             {"width": 1024},
             {"height": 600},
             {"fullscreen": fullscreen},
+            {"show_preview": show_preview},
             {"show_help": False},
             {"initial_expression": "neutral"},
             {"waiting_message": WAITING_MESSAGE},
@@ -222,18 +235,23 @@ def generate_launch_description():
         executable="waiting_person_greeter_node",
         name="waiting_person_greeter_node",
         output="screen",
+        parameters=[
+            {"idle_search_delay_sec": idle_search_delay_sec},
+            {"stable_detection_sec": 0.2},
+            {"greeting_cooldown_sec": 12.0},
+        ],
     )
 
     milton_nodes = TimerAction(
         period=milton_start_delay,
         actions=[
-            yolo_node,
-            yolo_web_stream,
-            waiting_person_greeter_node,
+            speech_node,
             face_display_node,
             main_controller_node,
-            speech_node,
+            waiting_person_greeter_node,
             light_controller_node,
+            yolo_node,
+            yolo_web_stream,
         ],
     )
 
@@ -242,6 +260,7 @@ def generate_launch_description():
             map_arg,
             milton_start_delay_arg,
             fullscreen_arg,
+            show_preview_arg,
             use_camera_arg,
             use_yolo_arg,
             use_web_stream_arg,
@@ -255,6 +274,7 @@ def generate_launch_description():
             depth_topic_arg,
             confidence_arg,
             web_stream_port_arg,
+            idle_search_delay_sec_arg,
             qbot_navigation,
             realsense_launch,
             milton_nodes,

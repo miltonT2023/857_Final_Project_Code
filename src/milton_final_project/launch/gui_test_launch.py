@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -8,6 +9,9 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     fullscreen = LaunchConfiguration('fullscreen')
+    show_preview = LaunchConfiguration('show_preview')
+    use_camera = LaunchConfiguration('use_camera')
+    use_yolo = LaunchConfiguration('use_yolo')
     detection_model = LaunchConfiguration('detection_model')
     image_topic = LaunchConfiguration('image_topic')
     depth_topic = LaunchConfiguration('depth_topic')
@@ -32,6 +36,7 @@ def generate_launch_description():
                 'rs_launch.py',
             ])
         ),
+        condition=IfCondition(use_camera),
         launch_arguments={
             'align_depth.enable': 'true',
         }.items(),
@@ -47,6 +52,7 @@ def generate_launch_description():
             {'height': 600},
             {'fullscreen': fullscreen},
             {'show_help': False},
+            {'show_preview': show_preview},
             {'initial_expression': 'neutral'},
             {
                 'waiting_message': (
@@ -111,6 +117,7 @@ def generate_launch_description():
     )
 
     yolo_node = Node(
+        condition=IfCondition(use_yolo),
         package='milton_final_project',
         executable='yolo_node',
         name='yolo_node',
@@ -128,6 +135,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('fullscreen', default_value='true'),
+        DeclareLaunchArgument('show_preview', default_value='false'),
+        DeclareLaunchArgument('use_camera', default_value='true'),
+        DeclareLaunchArgument('use_yolo', default_value='true'),
         DeclareLaunchArgument('detection_model', default_value='yolov8n.pt'),
         DeclareLaunchArgument('image_topic', default_value='/camera/color/image_raw'),
         DeclareLaunchArgument(

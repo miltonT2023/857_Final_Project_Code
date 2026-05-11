@@ -34,6 +34,7 @@ class FaceDisplayNode(Node):
         self.declare_parameter('height', 600)
         self.declare_parameter('fullscreen', True)
         self.declare_parameter('show_help', False)
+        self.declare_parameter('show_preview', False)
         self.declare_parameter('message_topic', '/robot/message')
         self.declare_parameter('display_status_topic', '/face/status_message')
         self.declare_parameter('preview_topic', '/yolo/annotated_image')
@@ -51,6 +52,7 @@ class FaceDisplayNode(Node):
         requested_height = int(self.get_parameter('height').value)
         self.fullscreen = bool(self.get_parameter('fullscreen').value)
         self.show_help = bool(self.get_parameter('show_help').value)
+        self.show_preview = bool(self.get_parameter('show_preview').value)
         self.response_duration_sec = float(
             self.get_parameter('response_duration_sec').value
         )
@@ -536,7 +538,8 @@ class FaceDisplayNode(Node):
         self.screen.fill(self.bg)
         self.draw_background()
         self.draw_expression()
-        self.draw_preview()
+        if self.show_preview:
+            self.draw_preview()
         self.draw_bottom_panel()
         self.draw_message()
         self.draw_input_box()

@@ -83,9 +83,7 @@ class MainControllerNode(Node):
         )
 
         self.timer = self.create_timer(0.1, self.update)
-        self.publish_stage('waiting')
-        self.publish_expression('neutral')
-        self.publish_message(self.waiting_message)
+        self.startup_timer = self.create_timer(1.0, self.publish_startup_state)
         self.get_logger().info(f'Main controller listening on: {user_input_topic}')
 
     def publish_string(self, publisher, text: str):
@@ -114,6 +112,12 @@ class MainControllerNode(Node):
         if normalized_stage != self.last_stage:
             self.last_stage = normalized_stage
             self.get_logger().info(f'Main controller stage changed to: {normalized_stage}')
+
+    def publish_startup_state(self):
+        self.startup_timer.cancel()
+        self.publish_stage('waiting')
+        self.publish_expression('neutral')
+        self.publish_message(self.waiting_message)
 
     def reset_to_waiting(self):
         self.pending_destination_label = None

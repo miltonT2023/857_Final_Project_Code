@@ -10,7 +10,7 @@ class WayfindingHistoryNode(Node):
     def __init__(self):
         super().__init__('wayfinding_history_node')
 
-        default_log_dir = Path.home() / 'Milton_Final_Project' / 'runtime_logs'
+        default_log_dir = Path(__file__).resolve().parent
         self.declare_parameter('log_dir', str(default_log_dir))
         self.log_dir = Path(self.get_parameter('log_dir').value).expanduser()
         self.log_dir.mkdir(parents=True, exist_ok=True)

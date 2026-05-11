@@ -11,12 +11,15 @@ class SpeechNode(Node):
         super().__init__('speech_node')
 
         self.declare_parameter('message_topic', '/robot/message')
+        self.declare_parameter('display_status_topic', '/face/status_message')
         self.declare_parameter('speech_command', '')
         self.declare_parameter('voice_rate', 150)
         self.declare_parameter('interrupt_previous', True)
         self.declare_parameter('wait_for_completion', True)
+        self.declare_parameter('repeat_suppression_sec', 2.0)
 
         message_topic = self.get_parameter('message_topic').value
+        display_status_topic = self.get_parameter('display_status_topic').value
         self.voice_rate = int(self.get_parameter('voice_rate').value)
         self.interrupt_previous = bool(
             self.get_parameter('interrupt_previous').value
@@ -24,18 +27,31 @@ class SpeechNode(Node):
         self.wait_for_completion = bool(
             self.get_parameter('wait_for_completion').value
         )
+        self.repeat_suppression_sec = float(
+            self.get_parameter('repeat_suppression_sec').value
+        )
         self.speech_command = self.resolve_speech_command(
             self.get_parameter('speech_command').value
         )
         self.speech_process = None
+        self.last_spoken_text = None
+        self.last_spoken_at = None
 
-        self.subscription = self.create_subscription(
+        self.message_subscription = self.create_subscription(
             String,
             message_topic,
             self.message_callback,
             10,
         )
-        self.get_logger().info(f'Speech node listening on: {message_topic}')
+        self.display_status_subscription = self.create_subscription(
+            String,
+            display_status_topic,
+            self.message_callback,
+            10,
+        )
+        self.get_logger().info(
+            f'Speech node listening on: {message_topic}, {display_status_topic}'
+        )
         if self.speech_command:
             self.get_logger().info(f'Speaking with: {self.speech_command}')
         else:
@@ -61,8 +77,20 @@ class SpeechNode(Node):
     def message_callback(self, msg: String):
         text = msg.data.strip()
         if text:
+            if self.is_recent_repeat(text):
+                return
+
+            self.last_spoken_text = text
+            self.last_spoken_at = self.get_clock().now()
             self.get_logger().info(f'Message received: {text}')
             self.speak(text)
+
+    def is_recent_repeat(self, text: str) -> bool:
+        if text != self.last_spoken_text or self.last_spoken_at is None:
+            return False
+
+        elapsed = (self.get_clock().now() - self.last_spoken_at).nanoseconds / 1e9
+        return elapsed <= self.repeat_suppression_sec
 
     def build_speech_command(self, text: str):
         if self.speech_command == 'spd-say':
