@@ -6,13 +6,19 @@ import json
 import math
 import re
 import sys
+import time
 from pathlib import Path
 
+from action_msgs.msg import GoalStatus
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseWithCovarianceStamped
 import rclpy
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 from rclpy.utilities import remove_ros_args
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import String
 
 
@@ -26,6 +32,9 @@ def workspace_root():
 ROOT = workspace_root()
 DEFAULT_LABELS_FILE = ROOT / "maps" / "lab_map_new_labels.json"
 LAST_LABEL_FILE = ROOT / "maps" / "last_navigation_label.json"
+FULL_SPIN_COMMAND = "__full_spin__"
+RETURN_STAGING_COMMAND = "__return_staging__"
+BREADCRUMB_RETURN_COMMAND = "__return_breadcrumbs__"
 
 ALIASES = {
     "dr zhang": "xiaorong zhang",
@@ -41,6 +50,17 @@ def normalize(text):
 
 def yaw_to_quaternion(yaw):
     return math.sin(yaw / 2.0), math.cos(yaw / 2.0)
+
+
+def quaternion_to_yaw(orientation):
+    return math.atan2(
+        2.0 * (orientation.w * orientation.z + orientation.x * orientation.y),
+        1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z),
+    )
+
+
+def normalize_angle(angle):
+    return math.atan2(math.sin(angle), math.cos(angle))
 
 
 def load_labels(path):
@@ -94,13 +114,36 @@ def find_label(labels, query):
 
 
 class LabelNavigator(Node):
-    def __init__(self, action_name):
+    def __init__(self, action_name, status_topic):
         super().__init__("go_to_label")
         self.action_name = action_name
+        self.status_topic = status_topic
         self.client = ActionClient(self, NavigateToPose, action_name)
+        self.status_pub = self.create_publisher(String, status_topic, 10)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.labels = []
         self.server_timeout_sec = 10.0
         self.active_goal_label = None
+        self.latest_pose = None
+        self.latest_scan = None
+        self.create_subscription(
+            PoseWithCovarianceStamped,
+            "/amcl_pose",
+            self.pose_callback,
+            10,
+        )
+        self.create_subscription(
+            LaserScan,
+            "/scan",
+            self.scan_callback,
+            qos_profile_sensor_data,
+        )
+
+    def pose_callback(self, msg):
+        self.latest_pose = msg
+
+    def scan_callback(self, msg):
+        self.latest_scan = msg
 
     def go_to(self, label, timeout_sec):
         world = label.get("world") or {}
@@ -137,6 +180,7 @@ class LabelNavigator(Node):
         result = result_future.result()
         if result is None:
             raise RuntimeError("Nav2 did not return a result")
+        self.publish_navigation_status(label, result.status)
         return result.status
 
     def listen_for_labels(self, labels, topic, timeout_sec):
@@ -161,10 +205,36 @@ class LabelNavigator(Node):
             return
 
         try:
-            label = find_label(self.labels, query)
+            normalized_query = normalize(query)
+            if normalized_query == BREADCRUMB_RETURN_COMMAND:
+                self.get_logger().info("Ignoring breadcrumb return command.")
+                return
+            if normalized_query == FULL_SPIN_COMMAND:
+                label = self.virtual_label("full_spin", "Full spin")
+                self.active_goal_label = label_display(label)
+                self.get_logger().info("Received full spin command.")
+                status = self.execute_full_spin()
+                self.active_goal_label = None
+                self.publish_navigation_status(label, status)
+                return
+            if normalized_query == RETURN_STAGING_COMMAND:
+                label = self.build_return_staging_label()
+            else:
+                label = find_label(self.labels, query)
             goal = self.build_goal(label)
         except Exception as exc:
             self.get_logger().error(str(exc))
+            normalized_query = normalize(query)
+            if normalized_query == FULL_SPIN_COMMAND:
+                self.publish_navigation_status(
+                    self.virtual_label("full_spin", "Full spin"),
+                    GoalStatus.STATUS_ABORTED,
+                )
+            elif normalized_query == RETURN_STAGING_COMMAND:
+                self.publish_navigation_status(
+                    self.virtual_label("return_staging", "Return staging"),
+                    GoalStatus.STATUS_ABORTED,
+                )
             return
 
         self.active_goal_label = label_display(label)
@@ -177,6 +247,9 @@ class LabelNavigator(Node):
         x = float(world["x"])
         y = float(world["y"])
         yaw = float(label.get("yaw", 0.0))
+        return self.build_goal_from_values(x, y, yaw)
+
+    def build_goal_from_values(self, x, y, yaw):
         qz, qw = yaw_to_quaternion(yaw)
 
         goal = NavigateToPose.Goal()
@@ -188,6 +261,151 @@ class LabelNavigator(Node):
         goal.pose.pose.orientation.z = qz
         goal.pose.pose.orientation.w = qw
         return goal
+
+    def build_return_staging_label(self):
+        pose_msg = self.wait_for_pose()
+        scan_msg = self.wait_for_scan()
+        pose = pose_msg.pose.pose
+        x = pose.position.x
+        y = pose.position.y
+        yaw = quaternion_to_yaw(pose.orientation)
+
+        target_x, target_y, target_yaw, score = self.find_open_staging_pose(
+            x,
+            y,
+            yaw,
+            scan_msg,
+        )
+        self.get_logger().info(
+            "Return staging goal computed at "
+            f"x={target_x:.3f}, y={target_y:.3f}, yaw={target_yaw:.3f}, score={score:.3f}"
+        )
+        return {
+            "name": "return_staging",
+            "kind": "navigation",
+            "detail": "Return staging",
+            "source": "dynamic_lidar",
+            "world": {"x": target_x, "y": target_y},
+            "yaw": target_yaw,
+        }
+
+    def execute_full_spin(self):
+        angular_speed = 0.45
+        duration_sec = (2.0 * math.pi) / angular_speed
+        command_period_sec = 0.1
+        twist = Twist()
+        twist.angular.z = angular_speed
+
+        self.get_logger().info(
+            f"Starting full spin at {angular_speed:.2f} rad/s for {duration_sec:.1f} sec."
+        )
+        end_time = time.monotonic() + duration_sec
+        try:
+            while rclpy.ok() and time.monotonic() < end_time:
+                self.cmd_vel_pub.publish(twist)
+                time.sleep(command_period_sec)
+            return GoalStatus.STATUS_SUCCEEDED
+        finally:
+            self.stop_robot()
+
+    def stop_robot(self):
+        stop = Twist()
+        for _ in range(5):
+            self.cmd_vel_pub.publish(stop)
+            time.sleep(0.02)
+
+    def wait_for_pose(self):
+        if self.latest_pose is None:
+            raise RuntimeError("Cannot compute return staging: no /amcl_pose received")
+        return self.latest_pose
+
+    def wait_for_scan(self):
+        if self.latest_scan is None:
+            raise RuntimeError("Cannot compute return staging: no /scan received")
+        return self.latest_scan
+
+    def find_open_staging_pose(self, x, y, yaw, scan):
+        origin_angle = math.atan2(-y, -x)
+        origin_angle_robot = normalize_angle(origin_angle - yaw)
+        best = None
+        current_origin_distance = math.hypot(x, y)
+
+        for degrees in range(-180, 180, 15):
+            scan_angle = math.radians(degrees)
+            forward_min, forward_avg = self.scan_window_stats(
+                scan,
+                scan_angle,
+                math.radians(16.0),
+            )
+            side_min, side_avg = self.scan_window_stats(
+                scan,
+                scan_angle,
+                math.radians(38.0),
+            )
+            if forward_min is None or side_min is None:
+                continue
+            if forward_min < 0.85 or side_min < 0.60:
+                continue
+
+            distance_to_move = min(0.45, forward_min - 0.45)
+            if distance_to_move < 0.25:
+                continue
+
+            angle_in_map = yaw + scan_angle
+            target_x = x + distance_to_move * math.cos(angle_in_map)
+            target_y = y + distance_to_move * math.sin(angle_in_map)
+            target_origin_distance = math.hypot(target_x, target_y)
+            if target_origin_distance > current_origin_distance + 0.25:
+                continue
+
+            diff_to_origin = abs(normalize_angle(scan_angle - origin_angle_robot))
+            target_yaw = math.atan2(-target_y, -target_x)
+            score = (
+                min(forward_min, 2.5)
+                + min(forward_avg, 2.0)
+                + min(side_avg, 2.0)
+                + 0.75 * math.cos(diff_to_origin)
+                + (current_origin_distance - target_origin_distance)
+                - 0.1 * abs(scan_angle)
+            )
+
+            if best is None or score > best[0]:
+                best = (score, target_x, target_y, target_yaw, scan_angle, distance_to_move)
+
+        if best is None:
+            raise RuntimeError(
+                "Cannot compute return staging: no safe lidar cone toward origin found"
+            )
+
+        score, target_x, target_y, target_yaw, scan_angle, distance_to_move = best
+        self.get_logger().info(
+            "Return staging selected "
+            f"angle={scan_angle:.3f} rad, move={distance_to_move:.3f} m"
+        )
+        return target_x, target_y, target_yaw, score
+
+    def scan_window_stats(self, scan, center_angle, half_width):
+        distances = []
+        for index, distance in enumerate(scan.ranges):
+            if not math.isfinite(distance):
+                continue
+            if distance < scan.range_min or distance > scan.range_max:
+                continue
+            scan_angle = scan.angle_min + index * scan.angle_increment
+            if abs(normalize_angle(scan_angle - center_angle)) <= half_width:
+                distances.append(distance)
+
+        if not distances:
+            return None, None
+        return min(distances), sum(distances) / len(distances)
+
+    def virtual_label(self, name, detail):
+        return {
+            "name": name,
+            "kind": "navigation",
+            "detail": detail,
+            "world": None,
+        }
 
     def handle_goal_response(self, future, label):
         goal_handle = future.result()
@@ -207,11 +425,32 @@ class LabelNavigator(Node):
             self.active_goal_label = None
             return
 
-        save_last_label(label, result.status)
-        self.get_logger().info(
-            f"Navigation finished with status {result.status}. Saved {LAST_LABEL_FILE}."
-        )
+        if should_save_last_label(label):
+            save_last_label(label, result.status)
+            self.get_logger().info(
+                f"Navigation finished with status {result.status}. Saved {LAST_LABEL_FILE}."
+            )
+        else:
+            self.get_logger().info(
+                f"Navigation finished with status {result.status}. "
+                f"Skipped saving {LAST_LABEL_FILE} for {label.get('name')} label."
+            )
         self.active_goal_label = None
+        self.publish_navigation_status(label, result.status)
+
+    def publish_navigation_status(self, label, status):
+        payload = {
+            "event": "finished",
+            "label": label_display(label),
+            "name": label.get("name"),
+            "kind": label.get("kind"),
+            "detail": label.get("detail"),
+            "status": status,
+        }
+        msg = String()
+        msg.data = json.dumps(payload)
+        self.status_pub.publish(msg)
+        self.get_logger().info(f"Published navigation status to {self.status_topic}: {msg.data}")
 
 
 def save_last_label(label, status):
@@ -223,6 +462,11 @@ def save_last_label(label, status):
         "status": status,
     }
     LAST_LABEL_FILE.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+
+
+def should_save_last_label(label):
+    name = normalize(label.get("name", ""))
+    return name not in {"origin", "return_staging", "full_spin"}
 
 
 def parse_args():
@@ -252,6 +496,11 @@ def parse_args():
         help="Nav2 NavigateToPose action name",
     )
     parser.add_argument(
+        "--status-topic",
+        default="/robot/navigation_status",
+        help="std_msgs/String topic for completed navigation status",
+    )
+    parser.add_argument(
         "--server-timeout",
         type=float,
         default=10.0,
@@ -270,7 +519,7 @@ def main():
         return 0
 
     rclpy.init()
-    node = LabelNavigator(args.action_name)
+    node = LabelNavigator(args.action_name, args.status_topic)
     try:
         if args.listen or not args.label:
             node.listen_for_labels(labels, args.topic, args.server_timeout)
@@ -278,10 +527,16 @@ def main():
         else:
             label = find_label(labels, args.label)
             status = node.go_to(label, args.server_timeout)
-            save_last_label(label, status)
-            node.get_logger().info(
-                f"Navigation finished with status {status}. Saved {LAST_LABEL_FILE}."
-            )
+            if should_save_last_label(label):
+                save_last_label(label, status)
+                node.get_logger().info(
+                    f"Navigation finished with status {status}. Saved {LAST_LABEL_FILE}."
+                )
+            else:
+                node.get_logger().info(
+                    f"Navigation finished with status {status}. "
+                    f"Skipped saving {LAST_LABEL_FILE} for origin label."
+                )
         return 0
     except Exception as exc:
         node.get_logger().error(str(exc))

@@ -52,6 +52,7 @@ install(DIRECTORY launch
 )
 
 install(PROGRAMS
+  scripts/breadcrumb_return.py
   scripts/go_to_label.py
   scripts/led_controller.py
   scripts/wheel_odometry.py

@@ -729,12 +729,50 @@ def label_path_for(map_path: Path) -> Path:
     return map_path.with_name(f"{map_path.stem}_labels.json")
 
 
+def pixel_from_world(map_path: Path, world_x: float, world_y: float) -> tuple[int, int]:
+    meta = parse_yaml(map_path.with_suffix(".yaml"))
+    resolution = float(meta.get("resolution") or 0)
+    origin = meta.get("origin") if isinstance(meta.get("origin"), list) else [0, 0, 0]
+    if not resolution:
+        raise ValueError(f"Missing resolution in {map_path.with_suffix('.yaml')}")
+
+    _, height, _ = read_pgm(map_path)
+    x = round((world_x - float(origin[0])) / resolution)
+    y = round(height - ((world_y - float(origin[1])) / resolution))
+    return x, y
+
+
+def origin_label_for(map_path: Path) -> dict:
+    x, y = pixel_from_world(map_path, 0.0, 0.0)
+    return {
+        "id": "origin",
+        "name": "origin",
+        "kind": "navigation",
+        "detail": "Robot origin",
+        "source": "auto",
+        "x": x,
+        "y": y,
+        "world": {
+            "x": 0.0,
+            "y": 0.0,
+        },
+        "yaw": 0.0,
+    }
+
+
+def ensure_origin_label(map_path: Path, labels: list[dict]) -> list[dict]:
+    if any(label.get("name") == "origin" for label in labels):
+        return labels
+    return [*labels, origin_label_for(map_path)]
+
+
 def read_labels(map_path: Path) -> list[dict]:
     path = label_path_for(map_path)
     if not path.exists():
-        return []
+        return ensure_origin_label(map_path, [])
     data = json.loads(path.read_text(encoding="utf-8"))
-    return data.get("labels", []) if isinstance(data, dict) else []
+    labels = data.get("labels", []) if isinstance(data, dict) else []
+    return ensure_origin_label(map_path, labels)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -810,6 +848,7 @@ class Handler(BaseHTTPRequestHandler):
             labels = data.get("labels", [])
             if not isinstance(labels, list):
                 raise ValueError("labels must be a list")
+            labels = ensure_origin_label(map_path, labels)
 
             output = {
                 "map": name,

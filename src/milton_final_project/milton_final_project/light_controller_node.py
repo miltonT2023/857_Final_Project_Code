@@ -56,7 +56,7 @@ class LightControllerNode(Node):
             self.update_led()
 
     def state_to_color(self):
-        if self.current_state == 'navigation':
+        if self.current_state in {'navigation', 'returning'}:
             return (0.0, 1.0, 0.0)
 
         if self.current_state == 'confirmation':

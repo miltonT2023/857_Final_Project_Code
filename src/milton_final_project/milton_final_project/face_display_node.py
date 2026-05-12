@@ -529,7 +529,7 @@ class FaceDisplayNode(Node):
         )
 
     def draw(self):
-        if self.stage == 'navigation':
+        if self.stage in {'navigation', 'returning'}:
             self.draw_navigation_mode()
             self.draw_detection_border()
             pygame.display.flip()
@@ -560,7 +560,7 @@ class FaceDisplayNode(Node):
 
         headline = self.navigation_font.render("Let's go", True, self.navigation_text)
         subline = self.message_font.render(
-            'Going to navigation mode.',
+            self.current_message,
             True,
             self.navigation_text,
         )

@@ -7,7 +7,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
@@ -20,7 +20,15 @@ def generate_launch_description():
     qbot_share = get_package_share_directory("qbot_platform")
     realsense_share = get_package_share_directory("realsense2_camera")
 
+    maps_dir = "/home/nvidia/857_Final_Project_Code/maps"
+    map_name = LaunchConfiguration("map_name")
     map_yaml = LaunchConfiguration("map")
+    labels_file = LaunchConfiguration("labels_file")
+    use_breadcrumb_return = LaunchConfiguration("use_breadcrumb_return")
+    default_map = PythonExpression(["'", maps_dir, "/' + '", map_name, "' + '.yaml'"])
+    default_labels_file = PythonExpression([
+        "'", maps_dir, "/' + '", map_name, "' + '_labels.json'"
+    ])
     milton_start_delay = LaunchConfiguration("milton_start_delay")
     fullscreen = LaunchConfiguration("fullscreen")
     show_preview = LaunchConfiguration("show_preview")
@@ -32,6 +40,9 @@ def generate_launch_description():
     use_lights = LaunchConfiguration("use_lights")
     use_greeter = LaunchConfiguration("use_greeter")
     use_main_controller = LaunchConfiguration("use_main_controller")
+    return_label = LaunchConfiguration("return_label")
+    use_return_spin = LaunchConfiguration("use_return_spin")
+    use_return_staging = LaunchConfiguration("use_return_staging")
     detection_model = LaunchConfiguration("detection_model")
     image_topic = LaunchConfiguration("image_topic")
     depth_topic = LaunchConfiguration("depth_topic")
@@ -39,10 +50,25 @@ def generate_launch_description():
     web_stream_port = LaunchConfiguration("web_stream_port")
     idle_search_delay_sec = LaunchConfiguration("idle_search_delay_sec")
 
+    map_name_arg = DeclareLaunchArgument(
+        "map_name",
+        default_value="lab_map_new",
+        description="Base map name used to derive maps/<name>.yaml and maps/<name>_labels.json.",
+    )
     map_arg = DeclareLaunchArgument(
         "map",
-        default_value="/home/nvidia/857_Final_Project_Code/maps/lab_map_new.yaml",
+        default_value=default_map,
         description="Full path to the map yaml used by Nav2 localization.",
+    )
+    labels_file_arg = DeclareLaunchArgument(
+        "labels_file",
+        default_value=default_labels_file,
+        description="Full path to the map labels JSON used by label navigation.",
+    )
+    use_breadcrumb_return_arg = DeclareLaunchArgument(
+        "use_breadcrumb_return",
+        default_value="true",
+        description="Start the breadcrumb return node.",
     )
     milton_start_delay_arg = DeclareLaunchArgument(
         "milton_start_delay",
@@ -99,6 +125,21 @@ def generate_launch_description():
         default_value="true",
         description="Start the Milton controller that publishes /label.",
     )
+    return_label_arg = DeclareLaunchArgument(
+        "return_label",
+        default_value="__return_breadcrumbs__",
+        description="Label or internal command used when returning after arrival.",
+    )
+    use_return_spin_arg = DeclareLaunchArgument(
+        "use_return_spin",
+        default_value="false",
+        description="Spin before return; disabled for breadcrumb return.",
+    )
+    use_return_staging_arg = DeclareLaunchArgument(
+        "use_return_staging",
+        default_value="false",
+        description="Use lidar staging before return; disabled for breadcrumb return.",
+    )
     detection_model_arg = DeclareLaunchArgument(
         "detection_model",
         default_value="yolov8n.pt",
@@ -138,7 +179,12 @@ def generate_launch_description():
                 "qbot_platform_map_nav_bringup_launch.py",
             )
         ),
-        launch_arguments={"map": map_yaml}.items(),
+        launch_arguments={
+            "map_name": map_name,
+            "map": map_yaml,
+            "labels_file": labels_file,
+            "use_breadcrumb_return": use_breadcrumb_return,
+        }.items(),
     )
 
     realsense_launch = IncludeLaunchDescription(
@@ -210,6 +256,9 @@ def generate_launch_description():
         parameters=[
             {"waiting_message": WAITING_MESSAGE},
             {"response_duration_sec": 10.0},
+            {"return_label": return_label},
+            {"use_return_spin": use_return_spin},
+            {"use_return_staging": use_return_staging},
         ],
     )
 
@@ -257,7 +306,10 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            map_name_arg,
             map_arg,
+            labels_file_arg,
+            use_breadcrumb_return_arg,
             milton_start_delay_arg,
             fullscreen_arg,
             show_preview_arg,
@@ -269,6 +321,9 @@ def generate_launch_description():
             use_lights_arg,
             use_greeter_arg,
             use_main_controller_arg,
+            return_label_arg,
+            use_return_spin_arg,
+            use_return_staging_arg,
             detection_model_arg,
             image_topic_arg,
             depth_topic_arg,
