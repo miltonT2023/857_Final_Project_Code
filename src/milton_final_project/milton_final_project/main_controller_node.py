@@ -1,5 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
 
+from action_msgs.msg import GoalStatus
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -19,6 +21,13 @@ class MainControllerNode(Node):
         self.declare_parameter('expression_topic', '/face/expression')
         self.declare_parameter('stage_topic', '/robot/stage')
         self.declare_parameter('destination_label_topic', '/label')
+        self.declare_parameter('navigation_status_topic', '/robot/navigation_status')
+        self.declare_parameter('return_label', '__return_breadcrumbs__')
+        self.declare_parameter('return_spin_label', '__full_spin__')
+        self.declare_parameter('return_staging_label', '__return_staging__')
+        self.declare_parameter('use_return_spin', False)
+        self.declare_parameter('use_return_staging', False)
+        self.declare_parameter('arrival_pause_sec', 10.0)
         self.declare_parameter('response_duration_sec', 10.0)
         self.declare_parameter('confirmation_timeout_sec', 60.0)
         self.declare_parameter('navigation_timeout_sec', 20.0)
@@ -36,7 +45,15 @@ class MainControllerNode(Node):
         self.navigation_timeout_sec = float(
             self.get_parameter('navigation_timeout_sec').value
         )
+        self.arrival_pause_sec = float(
+            self.get_parameter('arrival_pause_sec').value
+        )
         self.waiting_message = self.get_parameter('waiting_message').value
+        self.return_label = self.get_parameter('return_label').value
+        self.return_spin_label = self.get_parameter('return_spin_label').value
+        self.return_staging_label = self.get_parameter('return_staging_label').value
+        self.use_return_spin = bool(self.get_parameter('use_return_spin').value)
+        self.use_return_staging = bool(self.get_parameter('use_return_staging').value)
 
         self.stage = 'waiting'
         self.pending_future = None
@@ -79,6 +96,12 @@ class MainControllerNode(Node):
         self.destination_label_pub = self.create_publisher(
             String,
             self.get_parameter('destination_label_topic').value,
+            10,
+        )
+        self.navigation_status_sub = self.create_subscription(
+            String,
+            self.get_parameter('navigation_status_topic').value,
+            self.navigation_status_callback,
             10,
         )
 
@@ -126,6 +149,88 @@ class MainControllerNode(Node):
         self.publish_expression('neutral')
         self.publish_message(self.waiting_message)
 
+    def handle_destination_arrival(self):
+        self.publish_stage('arrived')
+        self.publish_expression('happy')
+        self.publish_message('Thank you for using my services!')
+        self.state_timeout_at = self.now_seconds() + self.arrival_pause_sec
+
+    def start_return_to_origin(self):
+        self.publish_stage('returning')
+        self.publish_expression('neutral')
+        self.publish_message('Returning to my starting point.')
+        self.state_timeout_at = None
+        self.publish_string(self.destination_label_pub, self.return_label)
+
+    def start_return_staging(self):
+        self.publish_stage('return_staging')
+        self.publish_expression('neutral')
+        self.publish_message('Moving to a clearer spot before returning.')
+        self.state_timeout_at = None
+        self.publish_string(self.destination_label_pub, self.return_staging_label)
+
+    def start_return_spin(self):
+        self.publish_stage('return_spin')
+        self.publish_expression('neutral')
+        self.publish_message('Spinning once to scan for a clearer path.')
+        self.state_timeout_at = None
+        self.publish_string(self.destination_label_pub, self.return_spin_label)
+
+    def start_return_after_spin(self):
+        if self.use_return_staging:
+            self.start_return_staging()
+        else:
+            self.start_return_to_origin()
+
+    def handle_navigation_failure(self, status: int):
+        self.pending_destination_label = None
+        self.publish_stage('waiting')
+        self.publish_expression('confused')
+        if status == GoalStatus.STATUS_CANCELED:
+            self.publish_message('Navigation was canceled.')
+        else:
+            self.publish_message('I could not reach the destination.')
+        self.state_timeout_at = self.now_seconds() + self.response_duration_sec
+
+    def navigation_status_callback(self, msg: String):
+        try:
+            payload = json.loads(msg.data)
+        except json.JSONDecodeError as exc:
+            self.get_logger().warning(f'Navigation status decode failed: {exc!r}')
+            return
+
+        status = int(payload.get('status', GoalStatus.STATUS_UNKNOWN))
+        if self.stage == 'navigation':
+            if status == GoalStatus.STATUS_SUCCEEDED:
+                self.handle_destination_arrival()
+            else:
+                self.handle_navigation_failure(status)
+            return
+
+        if self.stage == 'returning':
+            if status == GoalStatus.STATUS_SUCCEEDED:
+                self.reset_to_waiting()
+            else:
+                self.handle_navigation_failure(status)
+            return
+
+        if self.stage == 'return_staging':
+            if status == GoalStatus.STATUS_SUCCEEDED:
+                self.start_return_to_origin()
+            else:
+                self.get_logger().warning(
+                    f'Return staging failed with status {status}; trying origin directly.'
+                )
+                self.start_return_to_origin()
+            return
+
+        if self.stage == 'return_spin':
+            if status != GoalStatus.STATUS_SUCCEEDED:
+                self.get_logger().warning(
+                    f'Return spin failed with status {status}; continuing return anyway.'
+                )
+            self.start_return_after_spin()
+
     def user_input_callback(self, msg: String):
         prompt_type, user_text = self.parse_user_input(msg.data)
         user_text = user_text.strip()
@@ -134,7 +239,13 @@ class MainControllerNode(Node):
             self.reset_to_waiting()
             return
 
-        if self.stage == 'navigation':
+        if self.stage in {
+            'navigation',
+            'arrived',
+            'return_spin',
+            'return_staging',
+            'returning',
+        }:
             self.reset_to_waiting()
             return
 
@@ -223,7 +334,7 @@ class MainControllerNode(Node):
             self.publish_stage('navigation')
             self.publish_expression('happy')
             self.publish_message('Going to navigation mode.')
-            self.state_timeout_at = self.now_seconds() + self.navigation_timeout_sec
+            self.state_timeout_at = None
             return
 
         if normalized in no_tokens:
@@ -270,6 +381,12 @@ class MainControllerNode(Node):
                 self.pending_future = None
 
         if self.state_timeout_at is not None and now >= self.state_timeout_at:
+            if self.stage == 'arrived':
+                if self.use_return_spin:
+                    self.start_return_spin()
+                else:
+                    self.start_return_after_spin()
+                return
             self.reset_to_waiting()
 
     def destroy_node(self):

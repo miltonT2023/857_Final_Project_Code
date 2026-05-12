@@ -1,10 +1,10 @@
 {
-  "name": "SEIC 403",
-  "kind": "room",
-  "detail": "Classroom - Classroom",
+  "name": "Alyssa Kubota",
+  "kind": "person",
+  "detail": "SEIC 326",
   "world": {
-    "x": 3.1500000000000004,
-    "y": -0.6799999999999997
+    "x": 2.9699999999999998,
+    "y": -5.609999999999999
   },
   "status": 4
 }
