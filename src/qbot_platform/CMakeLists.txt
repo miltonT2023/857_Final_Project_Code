@@ -55,6 +55,7 @@ install(PROGRAMS
   scripts/breadcrumb_return.py
   scripts/go_to_label.py
   scripts/led_controller.py
+  scripts/scan_wedge_filter.py
   scripts/wheel_odometry.py
   DESTINATION lib/${PROJECT_NAME}
 )

@@ -25,6 +25,10 @@ def generate_launch_description():
     map_yaml = LaunchConfiguration("map")
     labels_file = LaunchConfiguration("labels_file")
     use_breadcrumb_return = LaunchConfiguration("use_breadcrumb_return")
+    use_scan_filter = LaunchConfiguration("use_scan_filter")
+    scan_filter_file = LaunchConfiguration("scan_filter_file")
+    raw_scan_topic = LaunchConfiguration("raw_scan_topic")
+    filtered_scan_topic = LaunchConfiguration("filtered_scan_topic")
     default_map = PythonExpression(["'", maps_dir, "/' + '", map_name, "' + '.yaml'"])
     default_labels_file = PythonExpression([
         "'", maps_dir, "/' + '", map_name, "' + '_labels.json'"
@@ -69,6 +73,26 @@ def generate_launch_description():
         "use_breadcrumb_return",
         default_value="true",
         description="Start the breadcrumb return node.",
+    )
+    use_scan_filter_arg = DeclareLaunchArgument(
+        "use_scan_filter",
+        default_value="true",
+        description="Use /scan_filtered for AMCL and Nav2 costmaps.",
+    )
+    scan_filter_file_arg = DeclareLaunchArgument(
+        "scan_filter_file",
+        default_value="/home/nvidia/857_Final_Project_Code/filters/scan_wedge_filter.json",
+        description="JSON/YAML wedge filter file used by scan_wedge_filter.py.",
+    )
+    raw_scan_topic_arg = DeclareLaunchArgument(
+        "raw_scan_topic",
+        default_value="/scan",
+        description="Raw LaserScan topic from the lidar driver.",
+    )
+    filtered_scan_topic_arg = DeclareLaunchArgument(
+        "filtered_scan_topic",
+        default_value="/scan_filtered",
+        description="Filtered LaserScan topic consumed by navigation when enabled.",
     )
     milton_start_delay_arg = DeclareLaunchArgument(
         "milton_start_delay",
@@ -184,6 +208,10 @@ def generate_launch_description():
             "map": map_yaml,
             "labels_file": labels_file,
             "use_breadcrumb_return": use_breadcrumb_return,
+            "use_scan_filter": use_scan_filter,
+            "scan_filter_file": scan_filter_file,
+            "raw_scan_topic": raw_scan_topic,
+            "filtered_scan_topic": filtered_scan_topic,
         }.items(),
     )
 
@@ -310,6 +338,10 @@ def generate_launch_description():
             map_arg,
             labels_file_arg,
             use_breadcrumb_return_arg,
+            use_scan_filter_arg,
+            scan_filter_file_arg,
+            raw_scan_topic_arg,
+            filtered_scan_topic_arg,
             milton_start_delay_arg,
             fullscreen_arg,
             show_preview_arg,
